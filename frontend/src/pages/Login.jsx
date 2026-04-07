@@ -62,13 +62,12 @@ const Login = () => {
       toast.success(`Welcome back, ${data.name}! ✅`);
       navigate("/");
     } catch (error) {
-      // ── Handle lockout ──
       if (error.response?.status === 423) {
         setLockInfo(error.response.data);
       } else if (error.response?.data?.attemptsLeft !== undefined) {
         toast.error(error.response.data.error);
       } else {
-        toast.error(error.message);
+        toast.error(error.response?.data?.error || error.message);
       }
     } finally {
       setLoading(false);
@@ -76,11 +75,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-trade-light flex items-center
-                    justify-center px-4">
+    <div className="min-h-screen bg-trade-light flex items-center justify-center px-4">
       <div className="w-full max-w-md">
 
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2.5 mb-4">
             <div className="bg-trade-navy p-2.5 rounded-xl">
@@ -100,7 +97,6 @@ const Login = () => {
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
 
-          {/* ── Lockout Warning ── */}
           {lockInfo && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5">
               <div className="flex items-start gap-3">
@@ -123,7 +119,6 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
 
-            {/* ── Email ── */}
             <div>
               <label className="label">Email Address</label>
               <div className="relative">
@@ -145,19 +140,16 @@ const Login = () => {
                   }`}
                 />
                 {touched.email && !emailErrors.length && (
-                  <FiCheck className="absolute right-3 top-1/2 -translate-y-1/2
-                                      text-green-500" />
+                  <FiCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
                 )}
               </div>
               <FieldError errors={emailErrors} />
             </div>
 
-            {/* ── Password ── */}
             <div>
               <label className="label">Password</label>
               <div className="relative">
-                <FiLock className="absolute left-3 top-1/2 -translate-y-1/2
-                                   text-gray-400" />
+                <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   name="password"
                   type={showPass ? "text" : "password"}
@@ -170,15 +162,22 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2
-                             text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPass ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                 </button>
               </div>
+
+              <div className="mt-2 text-right">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm font-medium text-trade-navy hover:text-trade-gold transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
 
-            {/* ── Submit ── */}
             <button
               type="submit"
               disabled={loading || lockInfo}
@@ -189,15 +188,13 @@ const Login = () => {
             >
               {loading ? (
                 <>
-                  <div className="h-5 w-5 rounded-full border-2
-                                  border-white/30 border-t-white animate-spin" />
+                  <div className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                   Signing in...
                 </>
               ) : "Sign In"}
             </button>
           </form>
 
-          {/* Security Note */}
           <div className="mt-4 p-3 bg-gray-50 rounded-lg">
             <p className="text-xs text-gray-400 text-center">
               🔒 Account locks after 5 failed attempts for 15 minutes
@@ -206,9 +203,10 @@ const Login = () => {
 
           <p className="text-center text-sm text-gray-500 mt-4">
             Don't have an account?{" "}
-            <Link to="/register"
-              className="text-trade-navy font-medium hover:text-trade-gold
-                         transition-colors">
+            <Link
+              to="/register"
+              className="text-trade-navy font-medium hover:text-trade-gold transition-colors"
+            >
               Create one
             </Link>
           </p>

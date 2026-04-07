@@ -35,9 +35,20 @@ export const AuthProvider = ({ children }) => {
       API.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
       return data;
     } catch (error) {
-      // Pass full error with response for lockout handling
       throw error;
     }
+  };
+
+  const forgotPassword = async (email) => {
+    const { data } = await API.post("/auth/forgot-password", { email });
+    return data;
+  };
+
+  const resetPassword = async (token, password) => {
+    const { data } = await API.post(`/auth/reset-password/${token}`, {
+      password,
+    });
+    return data;
   };
 
   const logout = () => {
@@ -46,7 +57,6 @@ export const AuthProvider = ({ children }) => {
     delete API.defaults.headers.common["Authorization"];
   };
 
-  // ── Role helpers ──
   const isAdmin   = user?.role === "admin";
   const isManager = user?.role === "manager";
   const isUser    = user?.role === "user";
@@ -56,6 +66,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{
       user, loading,
       register, login, logout,
+      forgotPassword, resetPassword,
       isAdmin, isManager, isUser, canEdit,
     }}>
       {children}

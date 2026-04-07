@@ -8,11 +8,13 @@ import AddProduct         from "./pages/AddProduct";
 import BulkUpload         from "./pages/BulkUpload";
 import Login              from "./pages/Login";
 import Register           from "./pages/Register";
+import ForgotPassword     from "./pages/ForgotPassword";
+import ResetPassword      from "./pages/ResetPassword";
 import Dashboard          from "./pages/Dashboard";
 import UserManagement     from "./pages/UserManagement";
 import CategoryManagement from "./pages/CategoryManagement";
 import Spinner            from "./components/Spinner";
-const API_URL = import.meta.env.VITE_API_URL;
+
 // ── Protected Route ──
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, loading, isAdmin } = useAuth();
@@ -41,10 +43,12 @@ function App() {
       <main className="flex-grow">
         <Routes>
           {/* ── Public ── */}
-          <Route path="/"             element={<ProductList />}   />
+          <Route path="/" element={<ProductList />} />
           <Route path="/products/:id" element={<ProductDetail />} />
-          <Route path="/login"        element={<Login />}         />
-          <Route path="/register"     element={<Register />}      />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* ── Editor (Admin + Manager) ── */}
           <Route path="/add-product" element={

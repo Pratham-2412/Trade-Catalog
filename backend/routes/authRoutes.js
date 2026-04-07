@@ -5,6 +5,8 @@ const rateLimit = require("express-rate-limit");
 const {
   register,
   login,
+  forgotPassword,
+  resetPassword,
   getMe,
   getUsers,
   updateUserRole,
@@ -27,7 +29,9 @@ const registerLimiter = rateLimit({
 
 // Public Routes
 router.post("/register", registerLimiter, register);
-router.post("/login", login); // <- IMPORTANT: no loginLimiter here
+router.post("/login", login);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:token", resetPassword);
 
 // Protected Routes
 router.get("/me", protect, getMe);
