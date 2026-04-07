@@ -1,0 +1,83 @@
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth }        from "./context/AuthContext";
+import Navbar             from "./components/Navbar";
+import Footer             from "./components/Footer";
+import ProductList        from "./pages/ProductList";
+import ProductDetail      from "./pages/ProductDetail";
+import AddProduct         from "./pages/AddProduct";
+import BulkUpload         from "./pages/BulkUpload";
+import Login              from "./pages/Login";
+import Register           from "./pages/Register";
+import Dashboard          from "./pages/Dashboard";
+import UserManagement     from "./pages/UserManagement";
+import CategoryManagement from "./pages/CategoryManagement";
+import Spinner            from "./components/Spinner";
+
+// ── Protected Route ──
+const ProtectedRoute = ({ children, adminOnly = false }) => {
+  const { user, loading, isAdmin } = useAuth();
+  if (loading) return <Spinner text="Loading..." />;
+  if (!user)   return <Navigate to="/login" replace />;
+  if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
+  return children;
+};
+
+// ── Editor Route (Admin + Manager) ──
+const EditorRoute = ({ children }) => {
+  const { user, loading, canEdit } = useAuth();
+  if (loading)  return <Spinner text="Loading..." />;
+  if (!user)    return <Navigate to="/login"  replace />;
+  if (!canEdit) return <Navigate to="/"       replace />;
+  return children;
+};
+
+function App() {
+  const { loading } = useAuth();
+  if (loading) return <Spinner text="Loading..." />;
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-grow">
+        <Routes>
+          {/* ── Public ── */}
+          <Route path="/"             element={<ProductList />}   />
+          <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/login"        element={<Login />}         />
+          <Route path="/register"     element={<Register />}      />
+
+          {/* ── Editor (Admin + Manager) ── */}
+          <Route path="/add-product" element={
+            <EditorRoute><AddProduct /></EditorRoute>
+          } />
+          <Route path="/bulk-upload" element={
+            <EditorRoute><BulkUpload /></EditorRoute>
+          } />
+
+          {/* ── Admin Only ── */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute adminOnly>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/users" element={
+            <ProtectedRoute adminOnly>
+              <UserManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/categories" element={
+            <ProtectedRoute adminOnly>
+              <CategoryManagement />
+            </ProtectedRoute>
+          } />
+
+          {/* ── Fallback ── */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+export default App;

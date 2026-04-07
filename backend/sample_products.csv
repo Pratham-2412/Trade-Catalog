@@ -1,0 +1,6 @@
+name,description,category,price,currency,unit,minOrderQuantity,origin,hsCode,tags
+Basmati Rice,Premium long grain basmati rice,Grains,45.00,USD,kg,100,India,1006.30,rice|basmati|grains
+Olive Oil,Extra virgin cold pressed olive oil,Oils,120.00,EUR,liter,50,Spain,1509.10,oil|olive|organic
+Cotton Fabric,100% pure cotton plain weave fabric,Textiles,8.50,USD,meter,500,Pakistan,5208.11,cotton|fabric|textile
+Green Tea,Organic green tea loose leaf,Beverages,30.00,USD,kg,200,China,0902.10,tea|green|organic
+Cashew Nuts,Grade W320 cashew nuts,Dry Fruits,600.00,USD,kg,25,Vietnam,0801.32,cashew|nuts|dry fruits
