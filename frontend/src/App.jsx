@@ -12,7 +12,7 @@ import Dashboard          from "./pages/Dashboard";
 import UserManagement     from "./pages/UserManagement";
 import CategoryManagement from "./pages/CategoryManagement";
 import Spinner            from "./components/Spinner";
-
+const API_URL = import.meta.env.VITE_API_URL;
 // ── Protected Route ──
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, loading, isAdmin } = useAuth();
