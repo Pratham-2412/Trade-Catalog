@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const sendMail = require("../utils/nodemailer"); // ✅ added
 
 // Generate JWT
 const generateToken = (id) =>
@@ -116,7 +117,7 @@ exports.forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    const message = "If that email exists, a reset link has been generated.";
+    const message = "If that email exists, a reset link has been sent.";
 
     if (!user) {
       return res.json({ success: true, message });
@@ -136,12 +137,49 @@ exports.forgotPassword = async (req, res) => {
 
     const resetURL = `${process.env.CLIENT_URL}/reset-password/${rawToken}`;
 
-    // ✅ RETURN LINK (no email crash)
-    res.json({
-      success: true,
-      message,
-      resetURL,
-    });
+    // ✅ Email HTML
+    const emailHtml = `
+      <h2>Password Reset Request</h2>
+      <p>Hello ${user.name},</p>
+      <p>You requested to reset your password.</p>
+      <p>Click the button below:</p>
+      
+      <a href="${resetURL}" 
+        style="
+          display:inline-block;
+          padding:10px 20px;
+          background:#007bff;
+          color:#fff;
+          text-decoration:none;
+          border-radius:5px;
+        ">
+        Reset Password
+      </a>
+
+      <p>This link will expire in 15 minutes.</p>
+      <p>If you didn’t request this, ignore this email.</p>
+    `;
+
+    try {
+      await sendMail({
+        to: user.email,
+        subject: "Password Reset",
+        html: emailHtml,
+      });
+
+      res.json({
+        success: true,
+        message,
+      });
+    } catch (error) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+
+      return res.status(500).json({
+        error: "Email could not be sent",
+      });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
