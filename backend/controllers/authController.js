@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const sendMail = require("../utils/nodemailer"); // ✅ added
+const sendMail = require("../config/nodemailer"); // ✅ added
 
 // Generate JWT
 const generateToken = (id) =>
