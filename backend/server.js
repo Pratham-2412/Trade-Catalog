@@ -3,25 +3,46 @@ const cors    = require("cors");
 const path    = require("path");
 require("dotenv").config();
 
-const connectDB                    = require("./config/db");
-const { seedCategories }           = require("./controllers/categoryController");
+const connectDB          = require("./config/db");
+const { seedCategories } = require("./controllers/categoryController");
 
 const app = express();
 
-// Connect DB + seed categories
+// Connect DB
 connectDB().then(() => seedCategories());
 
-// Middleware
-app.use(cors());
+// ── CORS Fix ──
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://trade-catalog.vercel.app",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials:      true,
+  methods:          ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders:   ["Content-Type", "Authorization"],
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
-app.use("/api/auth",      require("./routes/authRoutes"));
-app.use("/api/products",  require("./routes/productRoutes"));
-app.use("/api/categories",require("./routes/categoryRoutes"));
-app.use("/api/inquiries", require("./routes/inquiryRoutes"));
+app.use("/api/auth",       require("./routes/authRoutes"));
+app.use("/api/products",   require("./routes/productRoutes"));
+app.use("/api/categories", require("./routes/categoryRoutes"));
+app.use("/api/inquiries",  require("./routes/inquiryRoutes"));
+app.use("/api/orders",     require("./routes/orderRoutes"));
 
 // Health check
 app.get("/", (req, res) => {
