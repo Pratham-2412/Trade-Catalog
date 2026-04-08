@@ -45,6 +45,17 @@ const userSchema = new mongoose.Schema(
       type: Number,
       select: false,
     },
+
+    // Password reset
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+
+    resetPasswordExpire: {
+      type: Date,
+      select: false,
+    },
   },
   {
     timestamps: true,
@@ -101,4 +112,5 @@ userSchema.methods.resetLoginAttempts = async function () {
   await this.save();
 };
 
-module.exports = mongoose.model("User", userSchema);
+// ✅ FIX APPLIED HERE
+module.exports = mongoose.models.User || mongoose.model("User", userSchema);

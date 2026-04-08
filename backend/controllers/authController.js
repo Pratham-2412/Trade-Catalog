@@ -1,401 +1,236 @@
-const User = require("../models/User");
-const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const transporter = require("../config/nodemailer");
+const jwt = require("jsonwebtoken");
+const User = require("../models/user");
+const sendMail = require("../config/nodemailer");
 
-// ── Generate Token ──
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE,
-  });
-};
+// Generate JWT
+const generateToken = (id) =>
+  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
 
-// ── Format user response ──
-const userResponse = (user, token) => ({
-  _id: user._id,
-  name: user.name,
-  email: user.email,
-  role: user.role,
-  isActive: user.isActive,
-  createdAt: user.createdAt,
-  token,
-});
-
-// ── Validate Email ──
-const isValidEmail = (email) => {
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email);
-};
-
-// ── Validate Password ──
-const isValidPassword = (password) => {
-  const errors = [];
-
-  if (password.length < 8) errors.push("At least 8 characters");
-  if (!/[A-Z]/.test(password)) errors.push("At least 1 uppercase letter");
-  if (!/[a-z]/.test(password)) errors.push("At least 1 lowercase letter");
-  if (!/[0-9]/.test(password)) errors.push("At least 1 number");
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-    errors.push("At least 1 special character (!@#$%^&*)");
-  }
-  if (/\s/.test(password)) errors.push("No spaces allowed");
-
-  return errors;
-};
-
-// ─── Register ─────────────────────────────────────────────────────────────────
-const register = async (req, res) => {
+// @route  POST /api/auth/register
+exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
-    // ── Check all fields ──
-    if (!name?.trim() || !email?.trim() || !password) {
-      return res.status(400).json({ error: "All fields are required" });
-    }
+    if (!name || !email || !password)
+      return res.status(400).json({ error: "Please provide name, email and password." });
 
-    // ── Validate name ──
-    if (name.trim().length < 2) {
-      return res.status(400).json({ error: "Name must be at least 2 characters" });
-    }
+    const exists = await User.findOne({ email });
+    if (exists)
+      return res.status(400).json({ error: "Email already registered." });
 
-    // ── Validate email ──
-    if (!isValidEmail(email)) {
-      return res.status(400).json({ error: "Please enter a valid email address" });
-    }
-
-    // ── Validate password ──
-    const passwordErrors = isValidPassword(password);
-    if (passwordErrors.length > 0) {
-      return res.status(400).json({
-        error: "Password does not meet requirements",
-        errors: passwordErrors,
-      });
-    }
-
-    // ── Check if email exists ──
-    const exists = await User.findOne({ email: email.trim().toLowerCase() });
-    if (exists) {
-      return res.status(400).json({ error: "Email already registered" });
-    }
-
-    // ── First user becomes admin ──
-    const userCount = await User.countDocuments();
-    const role = userCount === 0 ? "admin" : "user";
-
-    const user = await User.create({
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      password,
-      role,
-    });
-
-    const token = generateToken(user._id);
+    const user = await User.create({ name, email, password, role });
 
     res.status(201).json({
-      ...userResponse(user, token),
-      message:
-        role === "admin"
-          ? "Admin account created! You are the first user."
-          : "Account created successfully!",
+      success: true,
+      token: generateToken(user._id),
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
     });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-// ─── Login ────────────────────────────────────────────────────────────────────
-const login = async (req, res) => {
+// @route  POST /api/auth/login
+exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password)
+      return res.status(400).json({ error: "Please provide email and password." });
 
-    // ── Check fields ──
-    if (!email?.trim() || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
-    }
-
-    const cleanEmail = email.trim().toLowerCase();
-
-    // ── Validate email format ──
-    if (!isValidEmail(cleanEmail)) {
-      return res.status(400).json({ error: "Please enter a valid email address" });
-    }
-
-    // ── Find user ──
-    const user = await User.findOne({ email: cleanEmail }).select(
+    const user = await User.findOne({ email }).select(
       "+password +loginAttempts +lockUntil"
     );
+    if (!user) return res.status(401).json({ error: "Invalid credentials." });
 
-    if (!user) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
+    if (!user.isActive)
+      return res.status(403).json({ error: "Account is deactivated." });
 
-    // ── Check if account is deactivated ──
-    if (!user.isActive) {
-      return res.status(403).json({
-        error: "Your account has been deactivated. Contact admin.",
-      });
-    }
-
-    // ── Check if account is locked ──
     if (user.isLocked) {
-      const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 1000 / 60);
-
+      const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
       return res.status(423).json({
-        error: `Account locked due to too many failed attempts. Try again in ${minutesLeft} minute${minutesLeft > 1 ? "s" : ""}.`,
-        lockUntil: user.lockUntil,
-        minutesLeft,
+        error: `Account locked. Try again in ${minutesLeft} minute(s).`,
       });
     }
 
-    // ── Check password ──
     const isMatch = await user.matchPassword(password);
-
     if (!isMatch) {
       await user.incrementLoginAttempts();
-
-      // Re-fetch updated values
-      const updatedUser = await User.findById(user._id).select(
-        "+loginAttempts +lockUntil"
-      );
-
-      const attemptsLeft = Math.max(0, 5 - updatedUser.loginAttempts);
-
-      if (updatedUser.isLocked || attemptsLeft === 0) {
-        return res.status(423).json({
-          error: "Account locked for 15 minutes due to too many failed attempts.",
-          lockUntil: updatedUser.lockUntil,
-        });
-      }
-
+      const remaining = 5 - user.loginAttempts;
       return res.status(401).json({
-        error: `Invalid email or password. ${attemptsLeft} attempt${attemptsLeft > 1 ? "s" : ""} remaining.`,
-        attemptsLeft,
+        error: `Invalid credentials.${remaining > 0 ? ` ${remaining} attempt(s) left.` : ""}`,
       });
     }
 
-    // ── Success — reset attempts ──
     await user.resetLoginAttempts();
-    const token = generateToken(user._id);
 
     res.json({
-      ...userResponse(user, token),
-      message: "Login successful!",
+      success: true,
+      token: generateToken(user._id),
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
     });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-// ─── Forgot Password ──────────────────────────────────────────────────────────
-const forgotPassword = async (req, res) => {
+// @route  POST /api/auth/forgot-password
+exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+    if (!email)
+      return res.status(400).json({ error: "Please provide your email address." });
 
-    if (!email?.trim()) {
-      return res.status(400).json({ error: "Email is required" });
-    }
+    const user = await User.findOne({ email });
 
-    const cleanEmail = email.trim().toLowerCase();
+    // Same response whether email exists or not (prevents email enumeration)
+    const genericMsg = "If that email exists, a reset link has been sent.";
+    if (!user) return res.json({ success: true, message: genericMsg });
 
-    if (!isValidEmail(cleanEmail)) {
-      return res.status(400).json({ error: "Please enter a valid email address" });
-    }
+    // Generate raw token & store hashed version in DB
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
 
-    const user = await User.findOne({ email: cleanEmail }).select(
-      "+resetPasswordToken +resetPasswordExpire"
-    );
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+    await user.save({ validateBeforeSave: false });
 
-    if (!user) {
-      return res.status(404).json({ error: "No account found with this email" });
-    }
+    const resetURL = `${process.env.CLIENT_URL}/reset-password/${rawToken}`;
 
-    if (!user.isActive) {
-      return res.status(403).json({
-        error: "Your account has been deactivated. Contact admin.",
-      });
-    }
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <h2 style="color: #1d4ed8;">TradeCatalog — Password Reset</h2>
+        <p>Hi <strong>${user.name}</strong>,</p>
+        <p>We received a request to reset your password. Click the button below. This link expires in <strong>15 minutes</strong>.</p>
+        <a href="${resetURL}"
+           style="display:inline-block; margin: 16px 0; padding: 12px 24px;
+                  background-color: #1d4ed8; color: #fff; text-decoration: none;
+                  border-radius: 6px; font-size: 15px;">
+          Reset Password
+        </a>
+        <p style="font-size: 13px; color: #6b7280;">
+          Or copy this link into your browser:<br/>
+          <a href="${resetURL}" style="color:#1d4ed8;">${resetURL}</a>
+        </p>
+        <hr style="border:none; border-top:1px solid #e5e7eb; margin: 24px 0;" />
+        <p style="font-size: 12px; color: #9ca3af;">
+          If you did not request this, please ignore this email. Your password will remain unchanged.
+        </p>
+      </div>
+    `;
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
+    await sendMail({
+      to: user.email,
+      subject: "TradeCatalog — Password Reset Request",
+      html,
+    });
 
-    user.resetPasswordToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-
-    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
-
-    await user.save();
-
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
-
-    const message = `
-Hello ${user.name},
-
-You requested a password reset.
-
-Click the link below to reset your password:
-${resetUrl}
-
-This link will expire in 15 minutes.
-
-If you did not request this, please ignore this email.
-`;
-
-    try {
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: user.email,
-        subject: "Password Reset Request",
-        text: message,
-      });
-
-      res.json({ message: "Password reset link sent to your email" });
-    } catch (mailError) {
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
-      await user.save();
-
-      return res.status(500).json({ error: "Email could not be sent" });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.json({ success: true, message: genericMsg });
+  } catch (err) {
+    res.status(500).json({ error: "Email could not be sent. Try again later." });
   }
 };
 
-// ─── Reset Password ───────────────────────────────────────────────────────────
-const resetPassword = async (req, res) => {
+// @route  POST /api/auth/reset-password/:token
+exports.resetPassword = async (req, res) => {
   try {
-    const { token } = req.params;
     const { password } = req.body;
+    if (!password || password.length < 6)
+      return res.status(400).json({ error: "Password must be at least 6 characters." });
 
-    if (!password) {
-      return res.status(400).json({ error: "New password is required" });
-    }
-
-    const passwordErrors = isValidPassword(password);
-    if (passwordErrors.length > 0) {
-      return res.status(400).json({
-        error: "Password does not meet requirements",
-        errors: passwordErrors,
-      });
-    }
-
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    // Hash the token from URL and find matching user
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
 
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
       resetPasswordExpire: { $gt: Date.now() },
-    }).select("+password +resetPasswordToken +resetPasswordExpire +loginAttempts +lockUntil");
+    });
 
-    if (!user) {
-      return res.status(400).json({ error: "Invalid or expired reset token" });
-    }
+    if (!user)
+      return res.status(400).json({ error: "Token is invalid or has expired." });
 
+    // Set new password and clear reset fields
     user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
-    user.loginAttempts = 0;
-    user.lockUntil = undefined;
-
     await user.save();
 
-    res.json({ message: "Password reset successful. Please login." });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.json({
+      success: true,
+      message: "Password reset successful. You can now log in.",
+      token: generateToken(user._id),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-// ─── Get Me ───────────────────────────────────────────────────────────────────
-const getMe = async (req, res) => {
+// @route  GET /api/auth/me
+exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    res.json(userResponse(user, null));
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-// ─── Get All Users ────────────────────────────────────────────────────────────
-const getUsers = async (req, res) => {
+// @route  GET /api/auth/users  (admin)
+exports.getUsers = async (req, res) => {
   try {
-    const users = await User.find({})
-      .select("+loginAttempts +lockUntil")
-      .sort({ createdAt: -1 });
-
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const users = await User.find().sort({ createdAt: -1 });
+    res.json({ success: true, count: users.length, users });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-// ─── Update User Role ─────────────────────────────────────────────────────────
-const updateUserRole = async (req, res) => {
+// @route  PUT /api/auth/users/:id  (admin)
+exports.updateUserRole = async (req, res) => {
   try {
     const { role, isActive } = req.body;
+    const update = {};
+    if (role) update.role = role;
+    if (typeof isActive === "boolean") update.isActive = isActive;
 
-    if (req.params.id === req.user._id.toString()) {
-      return res.status(400).json({ error: "Cannot change your own role" });
-    }
+    const user = await User.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+      runValidators: true,
+    });
+    if (!user) return res.status(404).json({ error: "User not found." });
 
-    const allowedRoles = ["user", "manager", "admin"];
-    if (role && !allowedRoles.includes(role)) {
-      return res.status(400).json({ error: "Invalid role" });
-    }
-
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    if (role !== undefined) user.role = role;
-    if (isActive !== undefined) user.isActive = isActive;
-
-    await user.save();
-    res.json({ message: "User updated successfully", user });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-// ─── Unlock User Account ──────────────────────────────────────────────────────
-const unlockUser = async (req, res) => {
+// @route  PUT /api/auth/users/:id/unlock  (admin)
+exports.unlockUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select(
       "+loginAttempts +lockUntil"
     );
-
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) return res.status(404).json({ error: "User not found." });
 
     await user.resetLoginAttempts();
-    res.json({ message: "Account unlocked successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.json({ success: true, message: "User account unlocked." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-// ─── Delete User ──────────────────────────────────────────────────────────────
-const deleteUser = async (req, res) => {
+// @route  DELETE /api/auth/users/:id  (admin)
+exports.deleteUser = async (req, res) => {
   try {
-    if (req.params.id === req.user._id.toString()) {
-      return res.status(400).json({ error: "Cannot delete your own account" });
-    }
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found." });
 
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    await user.deleteOne();
-    res.json({ message: "User deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.json({ success: true, message: "User deleted successfully." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-};
-
-module.exports = {
-  register,
-  login,
-  forgotPassword,
-  resetPassword,
-  getMe,
-  getUsers,
-  updateUserRole,
-  unlockUser,
-  deleteUser,
 };
