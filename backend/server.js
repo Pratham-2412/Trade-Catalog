@@ -42,7 +42,7 @@ app.use("/api/auth",       require("./routes/authRoutes"));
 app.use("/api/products",   require("./routes/productRoutes"));
 app.use("/api/categories", require("./routes/categoryRoutes"));
 app.use("/api/inquiries",  require("./routes/inquiryRoutes"));
-app.use("/api/orders",     require("./routes/orderRoutes"));
+// Removed orderRoutes since it does not exist
 
 // Health check
 app.get("/", (req, res) => {
