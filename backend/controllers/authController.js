@@ -1,235 +1,33 @@
-const crypto = require("crypto");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-const sendMail = require("../config/nodemailer");
-
-// Generate JWT
-const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
-
-// @route  POST /api/auth/register
-exports.register = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
-
-    if (!name || !email || !password)
-      return res.status(400).json({ error: "Please provide name, email and password." });
-
-    const exists = await User.findOne({ email });
-    if (exists)
-      return res.status(400).json({ error: "Email already registered." });
-
-    const user = await User.create({ name, email, password, role });
-
-    res.status(201).json({
-      success: true,
-      token: generateToken(user._id),
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// @route  POST /api/auth/login
-exports.login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    if (!email || !password)
-      return res.status(400).json({ error: "Please provide email and password." });
-
-    const user = await User.findOne({ email }).select(
-      "+password +loginAttempts +lockUntil"
-    );
-    if (!user) return res.status(401).json({ error: "Invalid credentials." });
-
-    if (!user.isActive)
-      return res.status(403).json({ error: "Account is deactivated." });
-
-    if (user.isLocked) {
-      const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
-      return res.status(423).json({
-        error: `Account locked. Try again in ${minutesLeft} minute(s).`,
-      });
-    }
-
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      await user.incrementLoginAttempts();
-      const remaining = 5 - user.loginAttempts;
-      return res.status(401).json({
-        error: `Invalid credentials.${remaining > 0 ? ` ${remaining} attempt(s) left.` : ""}`,
-      });
-    }
-
-    await user.resetLoginAttempts();
-
-    res.json({
-      success: true,
-      token: generateToken(user._id),
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// @route  POST /api/auth/forgot-password
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+
     if (!email)
       return res.status(400).json({ error: "Please provide your email address." });
 
     const user = await User.findOne({ email });
 
-    // Same response whether email exists or not (prevents email enumeration)
-    const genericMsg = "If that email exists, a reset link has been sent.";
+    const genericMsg = "If that email exists, a reset link has been generated.";
     if (!user) return res.json({ success: true, message: genericMsg });
 
-    // Generate raw token & store hashed version in DB
+    // Generate token
     const rawToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
 
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+
     await user.save({ validateBeforeSave: false });
 
     const resetURL = `${process.env.CLIENT_URL}/reset-password/${rawToken}`;
 
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px;">
-        <h2 style="color: #1d4ed8;">TradeCatalog — Password Reset</h2>
-        <p>Hi <strong>${user.name}</strong>,</p>
-        <p>We received a request to reset your password. Click the button below. This link expires in <strong>15 minutes</strong>.</p>
-        <a href="${resetURL}"
-           style="display:inline-block; margin: 16px 0; padding: 12px 24px;
-                  background-color: #1d4ed8; color: #fff; text-decoration: none;
-                  border-radius: 6px; font-size: 15px;">
-          Reset Password
-        </a>
-        <p style="font-size: 13px; color: #6b7280;">
-          Or copy this link into your browser:<br/>
-          <a href="${resetURL}" style="color:#1d4ed8;">${resetURL}</a>
-        </p>
-        <hr style="border:none; border-top:1px solid #e5e7eb; margin: 24px 0;" />
-        <p style="font-size: 12px; color: #9ca3af;">
-          If you did not request this, please ignore this email. Your password will remain unchanged.
-        </p>
-      </div>
-    `;
-
-    await sendMail({
-      to: user.email,
-      subject: "TradeCatalog — Password Reset Request",
-      html,
-    });
-
-    res.json({ success: true, message: genericMsg });
-  } catch (err) {
-    res.status(500).json({ error: "Email could not be sent. Try again later." });
-  }
-};
-
-// @route  POST /api/auth/reset-password/:token
-exports.resetPassword = async (req, res) => {
-  try {
-    const { password } = req.body;
-    if (!password || password.length < 6)
-      return res.status(400).json({ error: "Password must be at least 6 characters." });
-
-    // Hash the token from URL and find matching user
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(req.params.token)
-      .digest("hex");
-
-    const user = await User.findOne({
-      resetPasswordToken: hashedToken,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
-
-    if (!user)
-      return res.status(400).json({ error: "Token is invalid or has expired." });
-
-    // Set new password and clear reset fields
-    user.password = password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-    await user.save();
-
+    // 🔥 RETURN LINK IN RESPONSE (instead of email)
     res.json({
       success: true,
-      message: "Password reset successful. You can now log in.",
-      token: generateToken(user._id),
+      message: genericMsg,
+      resetURL, // 👈 IMPORTANT
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
 
-// @route  GET /api/auth/me
-exports.getMe = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    res.json({ success: true, user });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// @route  GET /api/auth/users  (admin)
-exports.getUsers = async (req, res) => {
-  try {
-    const users = await User.find().sort({ createdAt: -1 });
-    res.json({ success: true, count: users.length, users });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// @route  PUT /api/auth/users/:id  (admin)
-exports.updateUserRole = async (req, res) => {
-  try {
-    const { role, isActive } = req.body;
-    const update = {};
-    if (role) update.role = role;
-    if (typeof isActive === "boolean") update.isActive = isActive;
-
-    const user = await User.findByIdAndUpdate(req.params.id, update, {
-      new: true,
-      runValidators: true,
-    });
-    if (!user) return res.status(404).json({ error: "User not found." });
-
-    res.json({ success: true, user });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// @route  PUT /api/auth/users/:id/unlock  (admin)
-exports.unlockUser = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).select(
-      "+loginAttempts +lockUntil"
-    );
-    if (!user) return res.status(404).json({ error: "User not found." });
-
-    await user.resetLoginAttempts();
-    res.json({ success: true, message: "User account unlocked." });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// @route  DELETE /api/auth/users/:id  (admin)
-exports.deleteUser = async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) return res.status(404).json({ error: "User not found." });
-
-    res.json({ success: true, message: "User deleted successfully." });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
