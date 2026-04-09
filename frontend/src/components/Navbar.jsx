@@ -135,6 +135,7 @@ const Navbar = () => {
                       { path: "/admin/orders", label: "📦 Orders"     },
                       { path: "/users",       label: "👥 Users"      },
                       { path: "/categories",  label: "🏷️ Categories" },
+                      { path: "/settings",    label: "⚙️ Settings"    },
                     ].map((item) => (
                       <Link
                         key={item.path}
@@ -261,6 +262,7 @@ const Navbar = () => {
                 { path: "/admin/orders", label: "📦 Orders"    },
                 { path: "/users",      label: "👥 Users"      },
                 { path: "/categories", label: "🏷️ Categories" },
+                { path: "/settings",   label: "⚙️ Settings"   },
               ].map((item) => (
                 <Link
                   key={item.path}

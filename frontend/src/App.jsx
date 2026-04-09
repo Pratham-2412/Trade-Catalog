@@ -15,6 +15,7 @@ import Dashboard          from "./pages/Dashboard";
 import UserManagement     from "./pages/UserManagement";
 import CategoryManagement from "./pages/CategoryManagement";
 import Spinner            from "./components/Spinner";
+import Settings           from "./pages/Settings";
 
 /* ✅ ADDED IMPORTS */
 import Checkout      from "./pages/Checkout";
@@ -94,6 +95,11 @@ function App() {
           <Route path="/admin/orders" element={
             <ProtectedRoute adminOnly>
               <AdminOrders />
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute adminOnly>
+              <Settings />
             </ProtectedRoute>
           } />
 

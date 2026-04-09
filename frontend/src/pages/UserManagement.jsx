@@ -15,7 +15,7 @@ const RoleBadge = ({ role }) => {
     user:    "bg-gray-100 text-gray-600",
   };
   return (
-    <span className={`badge ${colors[role]} capitalize px-3 py-1`}>
+    <span className={`badge ${colors[role] || "bg-gray-100 text-gray-600"} capitalize px-3 py-1`}>
       {role}
     </span>
   );
@@ -24,14 +24,19 @@ const RoleBadge = ({ role }) => {
 const UserManagement = () => {
   const { user: currentUser }   = useAuth();
   const [users,   setUsers]     = useState([]);
+  const [roles,   setRoles]     = useState([]);
   const [loading, setLoading]   = useState(true);
   const [search,  setSearch]    = useState("");
   const [updating, setUpdating] = useState(null);
 
-  const fetchUsers = async () => {
+  const fetchUsersAndRoles = async () => {
     try {
-      const { data } = await API.get("/auth/users");
-      setUsers(data);
+      const [usersRes, rolesRes] = await Promise.all([
+        API.get("/auth/users"),
+        API.get("/settings/roles")
+      ]);
+      setUsers(usersRes.data);
+      setRoles(rolesRes.data);
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -39,7 +44,7 @@ const UserManagement = () => {
     }
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => { fetchUsersAndRoles(); }, []);
 
   const handleRoleChange = async (userId, newRole) => {
     try {
@@ -237,11 +242,19 @@ const UserManagement = () => {
                                      focus:ring-2 focus:ring-trade-navy
                                      bg-white cursor-pointer"
                         >
-                          {ROLES.map((r) => (
-                            <option key={r} value={r} className="capitalize">
-                              {r.charAt(0).toUpperCase() + r.slice(1)}
-                            </option>
-                          ))}
+                          {roles.length > 0 ? (
+                            roles.map((r) => (
+                              <option key={r._id} value={r.name} className="capitalize">
+                                {r.displayName}
+                              </option>
+                            ))
+                          ) : (
+                            ["user", "manager", "admin"].map((r) => (
+                              <option key={r} value={r} className="capitalize">
+                                {r}
+                              </option>
+                            ))
+                          )}
                         </select>
                       )}
                     </td>

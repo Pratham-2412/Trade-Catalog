@@ -26,6 +26,7 @@ const AddProduct = () => {
   const [pdfFile,      setPdfFile]      = useState(null);
   const [imageUrlInput,setImageUrlInput]= useState("");
   const [useImageUrl,  setUseImageUrl]  = useState(false);
+  const [hsnCodes,    setHsnCodes]     = useState([]);
   const [activeTab,    setActiveTab]    = useState("basic");
 
   const [form, setForm] = useState({
@@ -57,6 +58,10 @@ const AddProduct = () => {
   useEffect(() => {
     fetchCategories()
       .then(({ data }) => setCategories(data))
+      .catch(console.error);
+
+    API.get("/settings/hsn")
+      .then(({ data }) => setHsnCodes(data))
       .catch(console.error);
   }, []);
 
@@ -442,11 +447,19 @@ const AddProduct = () => {
                 <label className="label">HS Code</label>
                 <input
                   name="hsCode"
+                  list="hsn-list"
                   value={form.hsCode}
                   onChange={handleChange}
                   placeholder="1006.30"
                   className="input-field"
                 />
+                <datalist id="hsn-list">
+                  {hsnCodes.map((hsn) => (
+                    <option key={hsn._id} value={hsn.code}>
+                      {hsn.code} - {hsn.description}
+                    </option>
+                  ))}
+                </datalist>
               </div>
             </div>
 
