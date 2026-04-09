@@ -607,7 +607,7 @@ const ProductListItem = ({ product }) => (
             View
           </Link>
           <button
-            onClick={() => window.open(`/api/products/${product._id}/pdf`, "_blank")}
+            onClick={() => window.open(`${import.meta.env.VITE_API_URL}/api/products/${product._id}/pdf`, "_blank")}
             className="text-xs bg-trade-gold text-white px-3 py-1.5
                        rounded-lg hover:bg-amber-600 transition-colors">
             PDF

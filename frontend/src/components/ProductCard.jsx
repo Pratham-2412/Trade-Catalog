@@ -25,7 +25,7 @@ const StockBadge = ({ status }) => {
 const ProductCard = ({ product }) => {
   const handlePdf = (e) => {
     e.preventDefault();
-    window.open(`/api/products/${product._id}/pdf`, "_blank");
+    window.open(`${import.meta.env.VITE_API_URL}/api/products/${product._id}/pdf`, "_blank");
   };
 
   return (

@@ -356,7 +356,7 @@ const ProductDetail = () => {
             </button>
             <button
               onClick={() =>
-                window.open(`/api/products/${id}/pdf`, "_blank")
+                window.open(`${import.meta.env.VITE_API_URL}/api/products/${id}/pdf`, "_blank")
               }
               className="flex-1 flex items-center justify-center gap-2
                          bg-trade-navy text-white py-3 rounded-xl
