@@ -44,10 +44,16 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// 🔥 HIGHEST PRIORITY EMERGENCY ROUTES
+const { updateUserRole } = require("./controllers/authController");
+const { protect, adminOnly } = require("./middleware/authMiddleware");
+app.post("/api/auth/update-user-secure", protect, adminOnly, updateUserRole);
+app.get("/api/version", (req, res) => res.json({ version: "PROD-SECURE-ID-V1", status: "READY" }));
+
 // ✅ Static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ✅ Routes
+// ✅ Standard Routes
 app.use("/api/auth",       require("./routes/authRoutes"));
 app.use("/api/products",   require("./routes/productRoutes"));
 app.use("/api/categories", require("./routes/categoryRoutes"));
@@ -55,18 +61,7 @@ app.use("/api/settings",   require("./routes/settingsRoutes"));
 app.use("/api/inquiries",  require("./routes/inquiryRoutes"));
 app.use("/api/orders",     require("./routes/orderRoutes"));
 
-// 🔥 FORCED SECURE UPDATE (Hardwired to avoid any folder/sync issues)
-const { updateUserRole } = require("./controllers/authController");
-const { protect, adminOnly } = require("./middleware/authMiddleware");
-app.post("/api/auth/update-user-secure", protect, adminOnly, updateUserRole);
-
-// ✅ Version Check
-app.get("/api/version", (req, res) => res.json({ version: "PROD-SECURE-ID-V1", status: "READY" }));
-
 // ✅ Health check
-app.get("/", (req, res) => {
-  res.json({ message: "TradeCatalog API is running ✅" });
-});
 
 // ✅ 404 handler
 app.use((req, res) => {
