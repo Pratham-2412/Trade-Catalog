@@ -47,10 +47,21 @@ app.use(express.urlencoded({ extended: true }));
 // ✅ Static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// 🔥 EMERGENCY DIRECT BYPASS ROUTE (POST)
+// 🔥 DIAGNOSTIC LOGGER (Logs all requests to Render dashboard)
+app.use((req, res, next) => {
+  console.log(`[REQ] ${req.method} ${req.url}`);
+  next();
+});
+
+// 🔥 EMERGENCY DIRECT BYPASS ROUTE (POST + WILDCARD)
 const { updateUserRole } = require("./controllers/authController");
 const { protect, adminOnly } = require("./middleware/authMiddleware");
-app.post("/api/direct-role-update/:id", protect, adminOnly, updateUserRole);
+
+// Handles /api/direct-role-update/ANY_ID
+app.post("/api/direct-role-update/*", protect, adminOnly, updateUserRole);
+
+// Simple Test Route
+app.get("/api/ping-test", (req, res) => res.json({ status: "alive", time: new Date() }));
 
 app.use("/api/auth",       require("./routes/authRoutes"));
 app.use("/api/products",   require("./routes/productRoutes"));
