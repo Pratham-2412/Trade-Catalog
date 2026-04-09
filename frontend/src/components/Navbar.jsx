@@ -71,6 +71,19 @@ const Navbar = () => {
               Products
             </Link>
 
+            {/* ✅ ADDED: My Orders */}
+            {user && (
+              <Link to="/my-orders"
+                className={`px-4 py-2 rounded-lg text-sm font-medium
+                            transition-all ${
+                  isActive("/my-orders")
+                    ? "bg-trade-gold text-white"
+                    : "text-blue-200 hover:bg-blue-800 hover:text-white"
+                }`}>
+                My Orders
+              </Link>
+            )}
+
             {canEdit && (
               <>
                 <Link to="/add-product"
@@ -119,6 +132,7 @@ const Navbar = () => {
                                   border-gray-100 overflow-hidden z-50">
                     {[
                       { path: "/dashboard",   label: "📊 Dashboard"  },
+                      { path: "/admin/orders", label: "📦 Orders"     },
                       { path: "/users",       label: "👥 Users"      },
                       { path: "/categories",  label: "🏷️ Categories" },
                     ].map((item) => (
@@ -244,6 +258,7 @@ const Navbar = () => {
               </div>
               {[
                 { path: "/dashboard",  label: "📊 Dashboard"  },
+                { path: "/admin/orders", label: "📦 Orders"    },
                 { path: "/users",      label: "👥 Users"      },
                 { path: "/categories", label: "🏷️ Categories" },
               ].map((item) => (

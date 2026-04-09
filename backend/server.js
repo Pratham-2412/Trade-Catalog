@@ -21,19 +21,16 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
   "https://trade-catalog.vercel.app",
-  process.env.CLIENT_URL, // ✅ FIXED (was FRONTEND_URL)
+  process.env.CLIENT_URL,
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow Postman / mobile apps
       if (!origin) return callback(null, true);
-
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-
       console.error("❌ CORS Blocked:", origin);
       return callback(new Error("Not allowed by CORS"));
     },
@@ -51,10 +48,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ✅ Routes
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/products", require("./routes/productRoutes"));
+app.use("/api/auth",       require("./routes/authRoutes"));
+app.use("/api/products",   require("./routes/productRoutes"));
 app.use("/api/categories", require("./routes/categoryRoutes"));
-app.use("/api/inquiries", require("./routes/inquiryRoutes"));
+app.use("/api/inquiries",  require("./routes/inquiryRoutes"));
+app.use("/api/orders",     require("./routes/orderRoutes")); // ← ADDED
 
 // ✅ Health check
 app.get("/", (req, res) => {

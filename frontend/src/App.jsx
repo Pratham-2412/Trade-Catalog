@@ -16,6 +16,12 @@ import UserManagement     from "./pages/UserManagement";
 import CategoryManagement from "./pages/CategoryManagement";
 import Spinner            from "./components/Spinner";
 
+/* ✅ ADDED IMPORTS */
+import Checkout      from "./pages/Checkout";
+import OrderSuccess  from "./pages/OrderSuccess";
+import MyOrders      from "./pages/MyOrders";
+import AdminOrders  from "./pages/AdminOrders";
+
 // ── Protected Route ──
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, loading, isAdmin } = useAuth();
@@ -84,6 +90,22 @@ function App() {
             <ProtectedRoute adminOnly>
               <CategoryManagement />
             </ProtectedRoute>
+          } />
+          <Route path="/admin/orders" element={
+            <ProtectedRoute adminOnly>
+              <AdminOrders />
+            </ProtectedRoute>
+          } />
+
+          {/* ✅ ADDED ROUTES */}
+          <Route path="/checkout/:productId" element={
+            <ProtectedRoute><Checkout /></ProtectedRoute>
+          } />
+          <Route path="/order-success/:orderId" element={
+            <ProtectedRoute><OrderSuccess /></ProtectedRoute>
+          } />
+          <Route path="/my-orders" element={
+            <ProtectedRoute><MyOrders /></ProtectedRoute>
           } />
 
           {/* ── Fallback ── */}

@@ -58,15 +58,18 @@ const Dashboard = () => {
   const [categoryData,  setCategoryData]  = useState([]);
   const [currencyData,  setCurrencyData]  = useState([]);
   const [timelineData,  setTimelineData]  = useState([]);
+  const [orderStats,    setOrderStats]    = useState(null);
+  const [recentOrders,  setRecentOrders]  = useState([]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [prodRes, userRes, inqRes, catRes] = await Promise.all([
+        const [prodRes, userRes, inqRes, catRes, orderRes] = await Promise.all([
           API.get("/products?limit=1000"),
           API.get("/auth/users"),
           fetchInquiries({ limit: 5 }),
           API.get("/categories"),
+          API.get("/orders/admin/stats"),
         ]);
 
         const prods = prodRes.data.products;
@@ -78,6 +81,8 @@ const Dashboard = () => {
         setUsers(usrs);
         setInquiries(inqs);
         setCategories(cats);
+        setOrderStats(orderRes.data);
+        setRecentOrders(orderRes.data.recentOrders);
 
         // ── Stats ──
         const bulk     = prods.filter((p) => p.isBulkUploaded).length;
@@ -215,22 +220,18 @@ const Dashboard = () => {
         <StatCard icon={FiUsers}        label="Total Users"
           value={stats.users}      color="bg-blue-500"
           sub="Registered users"   to="/users" />
+        <StatCard icon={FiShoppingCart} label="Total Orders"
+          value={orderStats?.total || 0} color="bg-indigo-500"
+          sub={`${orderStats?.paid || 0} paid orders`} to="/admin/orders" />
+        <StatCard icon={FiCreditCard}   label="Total Revenue"
+          value={`₹${(orderStats?.revenue || 0).toLocaleString()}`}
+          color="bg-rose-500"      sub="Paid revenue" />
         <StatCard icon={FiMessageSquare} label="Inquiries"
           value={stats.inquiries}  color="bg-emerald-500"
           sub="Total inquiries" />
         <StatCard icon={FiTag}          label="Categories"
           value={stats.categories} color="bg-purple-500"
           sub="Product categories" />
-        <StatCard icon={FiUpload}       label="Bulk Uploaded"
-          value={stats.bulk}       color="bg-orange-500"
-          sub="Via CSV" />
-        <StatCard icon={FiEye}          label="Total Views"
-          value={products.reduce((a, p) => a + (p.views || 0), 0)}
-          color="bg-cyan-500"      sub="Product views" />
-        <StatCard icon={FiPackage}      label="In Stock"
-          value={products.filter((p) =>
-            p.stockStatus === "in_stock").length}
-          color="bg-green-500"     sub="Available products" />
       </div>
 
       {/* Charts Row */}
@@ -293,6 +294,64 @@ const Dashboard = () => {
               No data yet
             </div>
           )}
+        </div>
+      </div>
+
+      </div>
+
+      {/* Recent Orders Section */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-display font-semibold text-gray-900">
+            Recent Orders
+          </h3>
+          <Link to="/admin/orders"
+            className="text-sm text-trade-navy font-medium
+                       hover:text-trade-gold transition-colors">
+            View All Orders →
+          </Link>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="text-gray-400 font-bold uppercase tracking-wider border-b border-gray-50">
+                <th className="pb-3">Order</th>
+                <th className="pb-3">Customer</th>
+                <th className="pb-3">Product</th>
+                <th className="pb-3 text-right">Amount</th>
+                <th className="pb-3 text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {recentOrders.map((order) => (
+                <tr key={order._id} className="hover:bg-gray-50/50">
+                  <td className="py-4 font-bold text-trade-navy">#{order.orderNumber}</td>
+                  <td className="py-4">
+                    <p className="font-medium text-gray-900">{order.user?.name}</p>
+                    <p className="text-xs text-gray-400">{order.user?.email}</p>
+                  </td>
+                  <td className="py-4 max-w-[200px] truncate">
+                    {order.items[0]?.productName}
+                  </td>
+                  <td className="py-4 text-right font-bold text-gray-900">
+                    ₹{order.totalAmount.toLocaleString()}
+                  </td>
+                  <td className="py-4 text-right">
+                    <span className={`badge text-[10px] px-2 py-0.5 ${
+                      order.paymentStatus === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                    }`}>
+                      {order.paymentStatus.toUpperCase()}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {recentOrders.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="py-8 text-center text-gray-300">No orders yet</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

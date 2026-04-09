@@ -53,16 +53,16 @@ const DetailRow = ({ icon: Icon, label, value }) => {
 };
 
 const ProductDetail = () => {
-  const { id }          = useParams();
-  const navigate        = useNavigate();
-  const { canEdit, isAdmin } = useAuth();
-  const [product,      setProduct]      = useState(null);
-  const [related,      setRelated]      = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [deleting,     setDeleting]     = useState(false);
-  const [activeImage,  setActiveImage]  = useState(0);
-  const [showInquiry,  setShowInquiry]  = useState(false);
-  const [activeTab,    setActiveTab]    = useState("details");
+  const { id }               = useParams();
+  const navigate             = useNavigate();
+  const { user, canEdit, isAdmin } = useAuth();
+  const [product,     setProduct]     = useState(null);
+  const [related,     setRelated]     = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [deleting,    setDeleting]    = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
+  const [showInquiry, setShowInquiry] = useState(false);
+  const [activeTab,   setActiveTab]   = useState("details");
 
   useEffect(() => {
     const load = async () => {
@@ -82,7 +82,6 @@ const ProductDetail = () => {
     window.scrollTo(0, 0);
   }, [id, navigate]);
 
-  // Scroll to inquiry
   useEffect(() => {
     if (window.location.hash === "#inquiry") {
       setShowInquiry(true);
@@ -112,6 +111,19 @@ const ProductDetail = () => {
     toast.success("Link copied to clipboard!");
   };
 
+  const handleBuyNow = () => {
+    if (!user) {
+      toast.error("Please login to place an order");
+      navigate("/login");
+      return;
+    }
+    if (product.stockStatus === "out_of_stock") {
+      toast.error("This product is out of stock");
+      return;
+    }
+    navigate(`/checkout/${product._id}`);
+  };
+
   const allImages = product
     ? [product.imageUrl, ...(product.images || [])].filter(Boolean)
     : [];
@@ -135,7 +147,6 @@ const ProductDetail = () => {
 
         {/* ── Left: Images ── */}
         <div>
-          {/* Main Image */}
           <div className="bg-white rounded-2xl border border-gray-100
                           overflow-hidden shadow-sm mb-3 relative">
             {allImages.length > 0 ? (
@@ -155,7 +166,6 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Badges */}
             <div className="absolute top-4 left-4 flex flex-col gap-2">
               {product.isFeatured && (
                 <span className="badge bg-trade-gold text-white
@@ -167,7 +177,6 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          {/* Thumbnail row */}
           {allImages.length > 1 && (
             <div className="flex gap-2 overflow-x-auto scrollbar-hide">
               {allImages.map((img, i) => (
@@ -188,7 +197,6 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {/* Tags */}
           {product.tags?.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-4">
               {product.tags.map((tag, i) => (
@@ -203,17 +211,14 @@ const ProductDetail = () => {
 
         {/* ── Right: Details ── */}
         <div>
-          {/* Header */}
           <div className="mb-4">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className="flex items-center gap-1 text-sm
-                               text-gray-500">
+              <span className="flex items-center gap-1 text-sm text-gray-500">
                 <FiTag className="text-trade-gold" />
                 {product.category}
               </span>
               {product.origin && (
-                <span className="flex items-center gap-1 text-sm
-                                 text-gray-500">
+                <span className="flex items-center gap-1 text-sm text-gray-500">
                   <FiMapPin size={12} />
                   {product.origin}
                 </span>
@@ -236,7 +241,6 @@ const ProductDetail = () => {
               </p>
             )}
 
-            {/* Stats */}
             <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
               <span className="flex items-center gap-1">
                 <FiEye size={12} /> {product.views} views
@@ -266,9 +270,7 @@ const ProductDetail = () => {
                             text-sm text-blue-200">
               <span>MOQ: {product.minOrderQuantity} {product.unit}</span>
               {product.maxOrderQuantity > 0 && (
-                <span>
-                  Max: {product.maxOrderQuantity} {product.unit}
-                </span>
+                <span>Max: {product.maxOrderQuantity} {product.unit}</span>
               )}
             </div>
           </div>
@@ -279,9 +281,7 @@ const ProductDetail = () => {
               <div className="bg-gray-50 rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <FiClock className="text-trade-gold text-sm" />
-                  <p className="text-xs text-gray-400 font-medium">
-                    Lead Time
-                  </p>
+                  <p className="text-xs text-gray-400 font-medium">Lead Time</p>
                 </div>
                 <p className="text-sm font-semibold text-gray-900">
                   {product.leadTime}
@@ -292,9 +292,7 @@ const ProductDetail = () => {
               <div className="bg-gray-50 rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <FiCreditCard className="text-trade-gold text-sm" />
-                  <p className="text-xs text-gray-400 font-medium">
-                    Payment
-                  </p>
+                  <p className="text-xs text-gray-400 font-medium">Payment</p>
                 </div>
                 <p className="text-sm font-semibold text-gray-900">
                   {product.paymentTerms}
@@ -305,9 +303,7 @@ const ProductDetail = () => {
               <div className="bg-gray-50 rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <FiHash className="text-trade-gold text-sm" />
-                  <p className="text-xs text-gray-400 font-medium">
-                    HS Code
-                  </p>
+                  <p className="text-xs text-gray-400 font-medium">HS Code</p>
                 </div>
                 <p className="text-sm font-semibold text-gray-900">
                   {product.hsCode}
@@ -318,9 +314,7 @@ const ProductDetail = () => {
               <div className="bg-gray-50 rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <FiGlobe className="text-trade-gold text-sm" />
-                  <p className="text-xs text-gray-400 font-medium">
-                    Origin
-                  </p>
+                  <p className="text-xs text-gray-400 font-medium">Origin</p>
                 </div>
                 <p className="text-sm font-semibold text-gray-900">
                   {product.origin}
@@ -343,36 +337,57 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          {/* ── Action Buttons ── */}
+          {/* Buy Now + Inquiry Row */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-3">
+            <button
+              onClick={handleBuyNow}
+              disabled={product.stockStatus === "out_of_stock"}
+              className="flex-1 flex items-center justify-center gap-2
+                         bg-trade-gold text-white py-3.5 rounded-xl
+                         font-bold hover:bg-amber-600 transition-all
+                         shadow-lg shadow-amber-100 disabled:opacity-50
+                         disabled:cursor-not-allowed text-base"
+            >
+              <FiShoppingCart size={18} />
+              {product.stockStatus === "out_of_stock"
+                ? "Out of Stock"
+                : "Buy Now"}
+            </button>
             <button
               onClick={() => setShowInquiry(true)}
               className="flex-1 flex items-center justify-center gap-2
-                         bg-trade-gold text-white py-3 rounded-xl
-                         font-medium hover:bg-amber-600 transition-colors"
-            >
-              <FiMessageSquare />
-              Send Inquiry
-            </button>
-            <button
-              onClick={() =>
-                window.open(`${import.meta.env.VITE_API_URL}/api/products/${id}/pdf`, "_blank")
-              }
-              className="flex-1 flex items-center justify-center gap-2
-                         bg-trade-navy text-white py-3 rounded-xl
+                         bg-trade-navy text-white py-3.5 rounded-xl
                          font-medium hover:bg-blue-800 transition-colors"
             >
-              <FiDownload />
-              Download PDF
+              <FiMessageSquare size={16} />
+              Send Inquiry
             </button>
           </div>
 
-          <div className="flex gap-3">
+          {/* PDF + Share + Edit + Delete Row */}
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() =>
+                window.open(
+                  `${import.meta.env.VITE_API_URL?.replace("/api", "") ||
+                  "http://localhost:5000"}/api/products/${id}/pdf`,
+                  "_blank"
+                )
+              }
+              className="flex items-center justify-center gap-1.5
+                         border-2 border-gray-200 text-gray-600 py-2.5
+                         px-4 rounded-xl font-medium hover:border-trade-navy
+                         hover:text-trade-navy transition-colors text-sm"
+            >
+              <FiDownload size={14} />
+              PDF
+            </button>
             <button
               onClick={handleShare}
-              className="flex-1 flex items-center justify-center gap-2
+              className="flex items-center justify-center gap-1.5
                          border-2 border-gray-200 text-gray-600 py-2.5
-                         rounded-xl font-medium hover:border-trade-navy
+                         px-4 rounded-xl font-medium hover:border-trade-navy
                          hover:text-trade-navy transition-colors text-sm"
             >
               <FiShare2 size={14} />
@@ -381,9 +396,9 @@ const ProductDetail = () => {
             {canEdit && (
               <Link
                 to={`/add-product?edit=${product._id}`}
-                className="flex-1 flex items-center justify-center gap-2
+                className="flex items-center justify-center gap-1.5
                            border-2 border-trade-navy text-trade-navy
-                           py-2.5 rounded-xl font-medium
+                           py-2.5 px-4 rounded-xl font-medium
                            hover:bg-trade-navy hover:text-white
                            transition-colors text-sm"
               >
@@ -395,13 +410,14 @@ const ProductDetail = () => {
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex items-center justify-center gap-2
+                className="flex items-center justify-center gap-1.5
                            border-2 border-red-200 text-red-500
                            py-2.5 px-4 rounded-xl font-medium
                            hover:bg-red-500 hover:text-white
                            transition-colors text-sm disabled:opacity-50"
               >
                 <FiTrash2 size={14} />
+                {deleting ? "..." : "Delete"}
               </button>
             )}
           </div>
@@ -411,13 +427,12 @@ const ProductDetail = () => {
       {/* ── Tabs ── */}
       <div className="bg-white rounded-2xl border border-gray-100
                       shadow-sm mb-8">
-        {/* Tab Headers */}
         <div className="flex border-b border-gray-100 overflow-x-auto
                         scrollbar-hide">
           {[
-            { id: "details",       label: "Details"        },
-            { id: "specs",         label: "Specifications" },
-            { id: "description",   label: "Description"    },
+            { id: "details",     label: "Details"        },
+            { id: "specs",       label: "Specifications" },
+            { id: "description", label: "Description"    },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -435,7 +450,6 @@ const ProductDetail = () => {
         </div>
 
         <div className="p-6">
-          {/* Details Tab */}
           {activeTab === "details" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -448,11 +462,11 @@ const ProductDetail = () => {
                   value={product.maxOrderQuantity > 0
                     ? `${product.maxOrderQuantity} ${product.unit}`
                     : "No limit"} />
-                <DetailRow icon={FiGlobe}        label="Country of Origin"
+                <DetailRow icon={FiGlobe}   label="Country of Origin"
                   value={product.origin} />
-                <DetailRow icon={FiHash}         label="HS Code"
+                <DetailRow icon={FiHash}    label="HS Code"
                   value={product.hsCode} />
-                <DetailRow icon={FiPackage}      label="Unit"
+                <DetailRow icon={FiPackage} label="Unit"
                   value={product.unit} />
               </div>
               <div>
@@ -471,7 +485,6 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {/* Specifications Tab */}
           {activeTab === "specs" && (
             product.specifications?.length > 0 ? (
               <div className="overflow-x-auto">
@@ -499,7 +512,6 @@ const ProductDetail = () => {
             )
           )}
 
-          {/* Description Tab */}
           {activeTab === "description" && (
             <div className="prose max-w-none">
               <p className="text-gray-700 leading-relaxed whitespace-pre-line">
@@ -520,8 +532,7 @@ const ProductDetail = () => {
         ) : (
           <div className="bg-gradient-to-r from-trade-navy to-blue-800
                           rounded-2xl p-8 text-white text-center">
-            <FiMessageSquare className="text-4xl mx-auto mb-3
-                                        text-trade-gold" />
+            <FiMessageSquare className="text-4xl mx-auto mb-3 text-trade-gold" />
             <h3 className="font-display font-bold text-2xl mb-2">
               Interested in this product?
             </h3>
