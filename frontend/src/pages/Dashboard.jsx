@@ -56,31 +56,83 @@ const Dashboard = () => {
   const [inquiries,  setInquiries]    = useState([]);
   const [categories, setCategories]   = useState([]);
   const [loading,      setLoading]      = useState(true);
+  const [stats,        setStats]        = useState({});
   const [hsnCodes,     setHsnCodes]     = useState([]);
   const [roles,        setRoles]        = useState([]);
-  const [search,       setSearch]       = useState("");
+  const [orderStats,    setOrderStats]    = useState(null);
+  const [recentOrders,  setRecentOrders]  = useState([]);
   const [categoryData,  setCategoryData]  = useState([]);
   const [currencyData,  setCurrencyData]  = useState([]);
   const [timelineData,  setTimelineData]  = useState([]);
-  const [orderStats,    setOrderStats]    = useState(null);
-  const [recentOrders,  setRecentOrders]  = useState([]);
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
-        const [statsRes, inqRes, hsnRes, rolesRes] = await Promise.all([
-          API.get("/orders/stats/admin"),
-          fetchInquiries(),
+        const [prodRes, userRes, inqRes, catRes, orderRes, hsnRes, rolesRes] = await Promise.all([
+          API.get("/products?limit=1000"),
+          API.get("/auth/users"),
+          fetchInquiries({ limit: 5 }),
+          API.get("/categories"),
+          API.get("/orders/admin/stats"),
           API.get("/settings/hsn"),
           API.get("/settings/roles"),
         ]);
-        setStats(statsRes.data);
-        setInquiries(inqRes.data);
+
+        const prods = prodRes.data.products;
+        const usrs  = userRes.data;
+        const inqs  = inqRes.data.inquiries;
+        const cats  = catRes.data;
+
+        setProducts(prods.slice(0, 6));
+        setUsers(usrs);
+        setInquiries(inqs);
+        setCategories(cats);
+        setOrderStats(orderRes.data);
+        setRecentOrders(orderRes.data.recentOrders || []);
         setHsnCodes(hsnRes.data);
         setRoles(rolesRes.data);
+
+        // ── Stats Calculation ──
+        const bulk     = prods.filter((p) => p.isBulkUploaded).length;
+        const featured = prods.filter((p) => p.isFeatured).length;
+        setStats({
+          total:      prods.length,
+          bulk,
+          manual:     prods.length - bulk,
+          featured,
+          users:      usrs.length,
+          categories: cats.length,
+          inquiries:  inqRes.data.total,
+        });
+
+        // ── Charts Logic ──
+        const catMap = {};
+        prods.forEach((p) => {
+          catMap[p.category] = (catMap[p.category] || 0) + 1;
+        });
+        setCategoryData(
+          Object.entries(catMap)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 8)
+        );
+
+        const curMap = {};
+        prods.forEach((p) => {
+          curMap[p.currency] = (curMap[p.currency] || 0) + 1;
+        });
+        setCurrencyData(Object.entries(curMap).map(([name, value]) => ({ name, value })));
+
+        const monthMap = {};
+        prods.forEach((p) => {
+          const m = new Date(p.createdAt).toLocaleString("default", { month: "short", year: "2-digit" });
+          monthMap[m] = (monthMap[m] || 0) + 1;
+        });
+        setTimelineData(Object.entries(monthMap).map(([month, count]) => ({ month, count })));
+
       } catch (err) {
-        console.error(err);
+        console.error("Dashboard Load Error:", err);
       } finally {
         setLoading(false);
       }
