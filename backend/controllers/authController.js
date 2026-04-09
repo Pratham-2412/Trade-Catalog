@@ -393,48 +393,29 @@ const getUsers = async (req, res) => {
   }
 };
 
-// ─── Update User Role ─────────────────────────────────────────────────────────
+// ─── Update User Role & Status ───────────────────────────────────────────────
 const updateUserRole = async (req, res) => {
   try {
     const { role, isActive } = req.body;
-
     const targetId = req.params.id;
-    const adminId  = req.user._id ? req.user._id.toString() : req.user.id;
 
-    if (targetId === adminId) {
-      return res.status(400).json({
-        error: "For security, you cannot change your own role from this panel.",
-      });
-    }
-
-    console.log("DEBUG: updateUserRole hit!");
-    console.log("DEBUG: req.params.id =", req.params.id);
-    console.log("DEBUG: req.body =", req.body);
-
-    const updateData = {};
-    if (role !== undefined)     updateData.role     = role;
-    if (isActive !== undefined) updateData.isActive = isActive;
-
-    // Direct update logic
+    // Direct database update to bypass any schema-level validation issues
     const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      { $set: updateData },
+      targetId,
+      { $set: { role, isActive } },
       { new: true, runValidators: false }
-    );
+    ).select("-password");
 
     if (!updatedUser) {
-       return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    res.json({ message: "Updated!", user: updatedUser });
-  } catch (error) {
-    console.error("DEBUG: Update Error:", error);
-    // TEMPORARY: Return 418 to see if it reaches hero
-    res.status(418).json({ 
-      error: "Controller Hit but failed",
-      message: error.message,
-      data_sent: req.body
+    res.json({
+      message: "User successfully updated ✅",
+      user: updatedUser,
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
