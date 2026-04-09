@@ -320,27 +320,43 @@ const downloadProductPDF = async (req, res) => {
     addRow("Country of Origin", product.origin);
     addRow("Stock Status",      product.stockStatus?.replace("_", " "));
 
-    // ── Auto-Generate Professional Barcode from Product Name ──
-    const barcodeData = product.name.substring(0, 25);
+    // ── Professional Dual-Code Section (QR + Barcode) ──
+    try {
+      // 1. Generate QR Code for Web Search
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(product.name)}`;
+      const qrPng = await bwipjs.toBuffer({
+        bcid:       "qrcode",
+        text:       searchUrl,
+        scale:      2,
+        height:     20,
+        width:      20,
+      });
 
-    if (barcodeData) {
-      try {
-        const png = await bwipjs.toBuffer({
-          bcid:     "code128",
-          text:     barcodeData,
-          scale:    4,               // Higher scale for PDF sharpness
-          height:   15,              // Taller bars for that retail look
-          includetext: true,         // Display name under bars
-          textfont: "OCRB",          // Professional barcode font look
-          textsize: 10,
-          textxalign: "center",
-        });
-        doc.moveDown(1);
-        doc.image(png, { width: 180, align: "center" });
-        doc.fontSize(8).fillColor("#999").text('SCAN TO SEARCH PRODUCT ONLINE', { align: "center" }).moveDown(1);
-      } catch (err) {
-        console.error("Barcode PDF error:", err);
-      }
+      // 2. Generate Professional HSN Barcode (Stripe lines)
+      const barcodeValue = product.hsCode || "00000000";
+      const barPng = await bwipjs.toBuffer({
+        bcid:       "code128",
+        text:       barcodeValue,
+        scale:      3,
+        height:     10,
+        includetext: true,
+        textfont:   "OCRB",
+        textsize:   10,
+        textxalign: "center",
+      });
+
+      const startY = doc.y + 10;
+      // Draw QR on left
+      doc.image(qrPng, 60, startY, { width: 60 });
+      doc.fontSize(7).fillColor("#3b82f6").text("SCAN TO SEARCH ONLINE", 50, startY + 65, { width: 80, align: "center" });
+
+      // Draw Barcode on Right
+      doc.image(barPng, 180, startY + 5, { width: 150 });
+      doc.fontSize(7).fillColor("#999").text("OFFICIAL TRADE BARCODE", 180, startY + 60, { width: 150, align: "center" });
+      
+      doc.moveDown(6);
+    } catch (err) {
+      console.error("Dual Barcode PDF error:", err);
     }
 
     if (product.certifications?.length > 0) {

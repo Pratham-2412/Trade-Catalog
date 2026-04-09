@@ -13,6 +13,7 @@ import InquiryForm from "../components/InquiryForm";
 import ProductCard from "../components/ProductCard";
 import Spinner from "../components/Spinner";
 import Barcode from "../components/Barcode";
+import QRCode from "react-qr-code";
 import toast from "react-hot-toast";
 
 const StockBadge = ({ status }) => {
@@ -423,17 +424,44 @@ const ProductDetail = () => {
             )}
           </div>
 
-          {/* New Prominent Barcode Spot */}
+          {/* Professional Dual Code Label */}
           {product.name && (
-            <div className="mt-6 flex flex-col items-center bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-              <Barcode value={product.name.substring(0, 25)} displayValue={true} />
-              <div className="mt-3 border-t border-gray-50 w-full pt-3 text-center">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">
-                   Professional Search Barcode
-                </p>
-                <p className="text-[11px] text-trade-navy mt-1 font-bold">
-                  Scan to Search: "{product.name}"
-                </p>
+            <div className="mt-8 bg-white p-6 rounded-3xl border border-gray-100 shadow-lg relative overflow-hidden group">
+              {/* Background accent */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
+              
+              <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                {/* ── Left: Search QR ── */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="bg-white p-2 border border-gray-100 rounded-xl shadow-sm">
+                    <QRCode 
+                       value={`https://www.google.com/search?q=${encodeURIComponent(product.name)}`} 
+                       size={80} 
+                    />
+                  </div>
+                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
+                    Google Search
+                  </p>
+                </div>
+
+                {/* Vertical Divider */}
+                <div className="hidden md:block w-px h-20 bg-gray-100" />
+
+                {/* ── Right: Product Barcode (HSN) ── */}
+                <div className="flex-1 flex flex-col items-center">
+                  <Barcode 
+                    value={product.hsCode || "00000000"} 
+                    displayValue={true} 
+                  />
+                  <div className="mt-3 text-center">
+                    <p className="text-[11px] font-bold text-gray-900 uppercase">
+                      {product.name}
+                    </p>
+                    <p className="text-[9px] text-gray-400 mt-0.5">
+                      OFFICIAL HSN / TRADE BARCODE
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
