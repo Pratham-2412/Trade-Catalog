@@ -72,6 +72,11 @@ const productSchema = new mongoose.Schema(
       trim:    true,
       default: "",
     },
+    barcode: {
+      type:    String,
+      trim:    true,
+      default: "",
+    },
     leadTime: {
       type:    String,
       default: "", // e.g. "7-10 days"

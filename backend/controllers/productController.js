@@ -115,7 +115,7 @@ const createProduct = async (req, res) => {
       name, description, shortDescription,
       category, price, currency, unit, priceUnit,
       minOrderQuantity, maxOrderQuantity,
-      origin, hsCode, tags, leadTime,
+      origin, hsCode, barcode, tags, leadTime,
       paymentTerms, certifications,
       stockStatus, isFeatured, specifications,
       imageUrl: bodyImageUrl,
@@ -154,7 +154,7 @@ const createProduct = async (req, res) => {
       category, price, currency,
       unit, priceUnit,
       minOrderQuantity, maxOrderQuantity,
-      origin, hsCode, leadTime, paymentTerms,
+      origin, hsCode, barcode, leadTime, paymentTerms,
       certifications: parsedCerts,
       stockStatus:    stockStatus || "in_stock",
       isFeatured:     isFeatured === "true" || isFeatured === true,
@@ -179,7 +179,7 @@ const updateProduct = async (req, res) => {
       "name", "description", "shortDescription", "category",
       "price", "currency", "unit", "priceUnit",
       "minOrderQuantity", "maxOrderQuantity", "origin",
-      "hsCode", "leadTime", "paymentTerms", "stockStatus",
+      "hsCode", "barcode", "leadTime", "paymentTerms", "stockStatus",
     ];
 
     fields.forEach((f) => {
@@ -320,12 +320,13 @@ const downloadProductPDF = async (req, res) => {
     addRow("Country of Origin", product.origin);
     addRow("Stock Status",      product.stockStatus?.replace("_", " "));
 
-    // ── Add Barcode for HSN ──
-    if (product.hsCode) {
+    // ── Add Barcode for Product (Barcode field or HS Code) ──
+    const barcodeData = product.barcode || product.hsCode;
+    if (barcodeData) {
       try {
         const png = await bwipjs.toBuffer({
           bcid:     "code128",       // Barcode type
-          text:     product.hsCode,  // Text to encode
+          text:     barcodeData,     // Text to encode
           scale:    3,               // 3x scaling factor
           height:   10,              // Bar height, in millimeters
           includetext: true,         // Show human-readable text
@@ -333,7 +334,7 @@ const downloadProductPDF = async (req, res) => {
         });
         doc.moveDown(1);
         doc.image(png, { width: 150, align: "center" });
-        doc.fontSize(8).fillColor("#999").text("Scannable HSN Barcode", { align: "center" }).moveDown(1);
+        doc.fontSize(8).fillColor("#999").text(product.barcode ? "Product Barcode" : "HSN Barcode", { align: "center" }).moveDown(1);
       } catch (err) {
         console.error("Barcode PDF error:", err);
       }

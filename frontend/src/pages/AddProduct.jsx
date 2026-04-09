@@ -42,6 +42,7 @@ const AddProduct = () => {
     maxOrderQuantity: "0",
     origin:           "",
     hsCode:           "",
+    barcode:          "",
     leadTime:         "",
     paymentTerms:     "",
     certifications:   "",
@@ -84,6 +85,7 @@ const AddProduct = () => {
           maxOrderQuantity: data.maxOrderQuantity || 0,
           origin:           data.origin   || "",
           hsCode:           data.hsCode   || "",
+          barcode:          data.barcode  || "",
           leadTime:         data.leadTime || "",
           paymentTerms:     data.paymentTerms || "",
           certifications:   data.certifications?.join(", ") || "",
@@ -460,6 +462,16 @@ const AddProduct = () => {
                     </option>
                   ))}
                 </datalist>
+              </div>
+              <div>
+                <label className="label font-bold text-trade-navy">Barcode (EAN/UPC)</label>
+                <input
+                  name="barcode"
+                  value={form.barcode}
+                  onChange={handleChange}
+                  placeholder="e.g. 037000752284"
+                  className="input-field border-2 border-blue-50 focus:border-trade-navy"
+                />
               </div>
             </div>
 

@@ -467,10 +467,12 @@ const ProductDetail = () => {
                   value={product.origin} />
                 <DetailRow icon={FiHash}    label="HS Code"
                   value={product.hsCode} />
-                {product.hsCode && (
-                  <div className="mt-2 text-center bg-gray-50 p-3 rounded-xl border border-dashed border-gray-200">
-                    <Barcode value={product.hsCode} height={40} width={1.5} />
-                    <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-bold">Scannable HSN Barcode</p>
+                {(product.barcode || product.hsCode) && (
+                  <div className="mt-2 text-center bg-gray-50 p-4 rounded-xl border border-dashed border-gray-200 shadow-inner">
+                    <Barcode value={product.barcode || product.hsCode} height={50} width={2} />
+                    <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-widest font-bold">
+                      {product.barcode ? "Product Barcode (EAN/UPC)" : "HSN Barcode"}
+                    </p>
                   </div>
                 )}
                 <DetailRow icon={FiPackage} label="Unit"
