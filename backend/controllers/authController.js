@@ -404,11 +404,7 @@ const updateUserRole = async (req, res) => {
       });
     }
 
-    const allowedRoles = ["user", "manager", "admin"];
-    if (role && !allowedRoles.includes(role)) {
-      return res.status(400).json({ error: "Invalid role" });
-    }
-
+    // Unified role system allows any role assigned by Admin
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
