@@ -13,7 +13,7 @@ import InquiryForm from "../components/InquiryForm";
 import ProductCard from "../components/ProductCard";
 import Spinner from "../components/Spinner";
 import Barcode from "../components/Barcode";
-import QRCode from "react-qr-code";
+import QRCode from "qrcode.react";
 import toast from "react-hot-toast";
 
 const StockBadge = ({ status }) => {
@@ -437,6 +437,7 @@ const ProductDetail = () => {
                     <QRCode 
                        value={`https://www.google.com/search?q=${encodeURIComponent(product.name)}`} 
                        size={80} 
+                       renderAs="svg"
                     />
                   </div>
                   <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
