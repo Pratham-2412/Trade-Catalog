@@ -398,19 +398,21 @@ const updateUserRole = async (req, res) => {
   try {
     const { role, isActive } = req.body;
 
-    if (req.params.id === req.user._id.toString()) {
+    const targetId = req.params.id;
+    const adminId  = req.user._id ? req.user._id.toString() : req.user.id;
+
+    if (targetId === adminId) {
       return res.status(400).json({
-        error: "Cannot change your own role",
+        error: "For security, you cannot change your own role from this panel.",
       });
     }
 
-    // Unified role system allows any role assigned by Admin
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(targetId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (role     !== undefined) user.role     = role;
+    if (role !== undefined) user.role = role;
     if (isActive !== undefined) user.isActive = isActive;
 
     await user.save();
