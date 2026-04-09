@@ -2,6 +2,7 @@ const Product  = require("../models/Product");
 const path     = require("path");
 const fs       = require("fs");
 const PDFDocument = require("pdfkit");
+const bwipjs     = require("bwip-js");
 
 // ── Helper: Build file URLs ──
 const getFileUrl = (req, filePath) => {
@@ -317,10 +318,26 @@ const downloadProductPDF = async (req, res) => {
     addRow("Price",             `${product.price} ${product.currency} / ${product.unit}`);
     addRow("Min. Order Qty",    `${product.minOrderQuantity} ${product.unit}`);
     addRow("Country of Origin", product.origin);
-    addRow("HS Code",           product.hsCode);
-    addRow("Lead Time",         product.leadTime);
-    addRow("Payment Terms",     product.paymentTerms);
     addRow("Stock Status",      product.stockStatus?.replace("_", " "));
+
+    // ── Add Barcode for HSN ──
+    if (product.hsCode) {
+      try {
+        const png = await bwipjs.toBuffer({
+          bcid:     "code128",       // Barcode type
+          text:     product.hsCode,  // Text to encode
+          scale:    3,               // 3x scaling factor
+          height:   10,              // Bar height, in millimeters
+          includetext: true,         // Show human-readable text
+          textxalign: "center",      // Always good to set this
+        });
+        doc.moveDown(1);
+        doc.image(png, { width: 150, align: "center" });
+        doc.fontSize(8).fillColor("#999").text("Scannable HSN Barcode", { align: "center" }).moveDown(1);
+      } catch (err) {
+        console.error("Barcode PDF error:", err);
+      }
+    }
 
     if (product.certifications?.length > 0) {
       addRow("Certifications", product.certifications.join(", "));

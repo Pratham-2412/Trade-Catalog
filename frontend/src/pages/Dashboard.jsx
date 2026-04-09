@@ -5,6 +5,7 @@ import {
   FiMessageSquare, FiStar, FiPlus,
   FiDownload, FiEye, FiCheck, FiX,
   FiClock, FiShoppingCart, FiCreditCard,
+  FiShield, FiEdit2, FiTrash2, FiSave,
 } from "react-icons/fi";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -15,6 +16,7 @@ import API from "../api/axios";
 import {
   fetchInquiries, updateInquiryStatus, deleteInquiry,
 } from "../api/products";
+import Barcode from "../components/Barcode";
 import Spinner from "../components/Spinner";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -53,8 +55,10 @@ const Dashboard = () => {
   const [users,      setUsers]        = useState([]);
   const [inquiries,  setInquiries]    = useState([]);
   const [categories, setCategories]   = useState([]);
-  const [loading,    setLoading]      = useState(true);
-  const [stats,      setStats]        = useState({});
+  const [loading,      setLoading]      = useState(true);
+  const [hsnCodes,     setHsnCodes]     = useState([]);
+  const [roles,        setRoles]        = useState([]);
+  const [search,       setSearch]       = useState("");
   const [categoryData,  setCategoryData]  = useState([]);
   const [currencyData,  setCurrencyData]  = useState([]);
   const [timelineData,  setTimelineData]  = useState([]);
@@ -64,75 +68,19 @@ const Dashboard = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [prodRes, userRes, inqRes, catRes, orderRes] = await Promise.all([
-          API.get("/products?limit=1000"),
-          API.get("/auth/users"),
-          fetchInquiries({ limit: 5 }),
-          API.get("/categories"),
-          API.get("/orders/admin/stats"),
+        setLoading(true);
+        const [statsRes, inqRes, hsnRes, rolesRes] = await Promise.all([
+          API.get("/orders/stats/admin"),
+          fetchInquiries(),
+          API.get("/settings/hsn"),
+          API.get("/settings/roles"),
         ]);
-
-        const prods = prodRes.data.products;
-        const usrs  = userRes.data;
-        const inqs  = inqRes.data.inquiries;
-        const cats  = catRes.data;
-
-        setProducts(prods.slice(0, 6));
-        setUsers(usrs);
-        setInquiries(inqs);
-        setCategories(cats);
-        setOrderStats(orderRes.data);
-        setRecentOrders(orderRes.data.recentOrders);
-
-        // ── Stats ──
-        const bulk     = prods.filter((p) => p.isBulkUploaded).length;
-        const featured = prods.filter((p) => p.isFeatured).length;
-        const newInq   = inqRes.data.total;
-        setStats({
-          total:      prods.length,
-          bulk,
-          manual:     prods.length - bulk,
-          featured,
-          users:      usrs.length,
-          categories: cats.length,
-          inquiries:  newInq,
-        });
-
-        // ── Category chart ──
-        const catMap = {};
-        prods.forEach((p) => {
-          catMap[p.category] = (catMap[p.category] || 0) + 1;
-        });
-        setCategoryData(
-          Object.entries(catMap)
-            .map(([name, count]) => ({ name, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 8)
-        );
-
-        // ── Currency pie ──
-        const curMap = {};
-        prods.forEach((p) => {
-          curMap[p.currency] = (curMap[p.currency] || 0) + 1;
-        });
-        setCurrencyData(
-          Object.entries(curMap)
-            .map(([name, value]) => ({ name, value }))
-        );
-
-        // ── Timeline ──
-        const monthMap = {};
-        prods.forEach((p) => {
-          const month = new Date(p.createdAt)
-            .toLocaleString("default", { month: "short", year: "2-digit" });
-          monthMap[month] = (monthMap[month] || 0) + 1;
-        });
-        setTimelineData(
-          Object.entries(monthMap)
-            .map(([month, count]) => ({ month, count }))
-        );
-      } catch (error) {
-        console.error(error);
+        setStats(statsRes.data);
+        setInquiries(inqRes.data);
+        setHsnCodes(hsnRes.data);
+        setRoles(rolesRes.data);
+      } catch (err) {
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -575,6 +523,73 @@ const Dashboard = () => {
               </p>
             </div>
           ))}
+        </div>
+      </div>
+      {/* Quick Settings Section (Roles & HSN) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+        {/* Manage HSN Codes */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <FiTag className="text-trade-gold" />
+            <h3 className="font-display font-semibold text-gray-900">Manage HSN Codes</h3>
+          </div>
+          <form className="flex gap-2 mb-4" onSubmit={async (e) => {
+            e.preventDefault();
+            const code = e.target.hsn.value;
+            if(!code) return;
+            try {
+              await API.post("/settings/hsn", { code, description: "Added from dashboard" });
+              toast.success("HSN Code added");
+              e.target.reset();
+              window.location.reload();
+            } catch (err) { toast.error(err.message); }
+          }}>
+            <input name="hsn" placeholder="Enter HSN Code..." className="input-field flex-1" />
+            <button type="submit" className="btn-primary px-4">Add</button>
+          </form>
+          <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+             {hsnCodes.map((hsn) => (
+               <div key={hsn._id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
+                 <div>
+                   <p className="font-bold text-xs">{hsn.code}</p>
+                   <p className="text-[10px] text-gray-400">{hsn.description}</p>
+                 </div>
+                 <Barcode value={hsn.code} height={20} width={1} displayValue={false} />
+               </div>
+             ))}
+             {hsnCodes.length === 0 && <p className="text-xs text-gray-400 italic">No HSN codes found</p>}
+          </div>
+        </div>
+
+        {/* Manage Dynamic Roles */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <FiShield className="text-indigo-500" />
+            <h3 className="font-display font-semibold text-gray-900">Add Custom Roles</h3>
+          </div>
+          <form className="space-y-3" onSubmit={async (e) => {
+             e.preventDefault();
+             const name = e.target.roleName.value;
+             const displayName = e.target.displayName.value;
+             if(!name || !displayName) return;
+             try {
+                await API.post("/settings/roles", { name, displayName });
+                toast.success("Role created");
+                e.target.reset();
+                window.location.reload();
+             } catch (err) { toast.error(err.message); }
+          }}>
+            <input name="roleName" placeholder="Role ID (e.g. staff)" className="input-field" />
+            <input name="displayName" placeholder="Display Name (e.g. Sales Staff)" className="input-field" />
+            <button type="submit" className="btn-primary w-full py-2.5">Create New Role</button>
+          </form>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {roles.map((r) => (
+              <span key={r._id} className="px-2 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded uppercase border border-indigo-100">
+                {r.displayName}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </div>

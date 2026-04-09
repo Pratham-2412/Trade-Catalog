@@ -12,6 +12,7 @@ import { useAuth } from "../context/AuthContext";
 import InquiryForm from "../components/InquiryForm";
 import ProductCard from "../components/ProductCard";
 import Spinner from "../components/Spinner";
+import Barcode from "../components/Barcode";
 import toast from "react-hot-toast";
 
 const StockBadge = ({ status }) => {
@@ -466,8 +467,14 @@ const ProductDetail = () => {
                   value={product.origin} />
                 <DetailRow icon={FiHash}    label="HS Code"
                   value={product.hsCode} />
+                {product.hsCode && (
+                  <div className="mt-2 text-center bg-gray-50 p-3 rounded-xl border border-dashed border-gray-200">
+                    <Barcode value={product.hsCode} height={40} width={1.5} />
+                    <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-bold">Scannable HSN Barcode</p>
+                  </div>
+                )}
                 <DetailRow icon={FiPackage} label="Unit"
-                  value={product.unit} />
+                   value={product.unit} />
               </div>
               <div>
                 <h4 className="font-semibold text-gray-900 mb-3">
