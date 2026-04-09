@@ -6,51 +6,49 @@ require("dotenv").config();
 
 const app = express();
 
-// ✅ CONNECT DATABASE (Hardcoded)
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log("🟢 DB CONNECTED"))
-  .catch(err => console.error("🔴 DB ERROR:", err));
-
-// ✅ USER SCHEMA (Hardcoded for maximum safety)
-const userSchema = new mongoose.Schema({
-  name: String,
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: { type: String, default: "user" },
-  isActive: { type: Boolean, default: true }
-}, { timestamps: true });
-const User = mongoose.models.User || mongoose.model("User", userSchema);
+// ✅ 1. THE LOUDEST LOGGER (Check Render Logs for this!)
+app.use((req, res, next) => {
+  console.log(`🚀 [Incoming]: ${req.method} ${req.url}`);
+  next();
+});
 
 app.use(cors());
 app.use(express.json());
 
-// ☢️ ATOMIC ROLE UPDATE (Hardcoded, No Security, Universal)
+// ✅ 2. HYPER-PRIORITY API ROUTES (Must be BEFORE static files)
+// Atomic Role Update
 app.all("/api/auth/x", async (req, res) => {
+  console.log("🎯 ATOMIC ROLE UPDATE HIT!");
   try {
     const { userId, role } = req.body;
-    console.log("🎯 ATOMIC HIT:", userId, role);
-    const updated = await User.findByIdAndUpdate(userId, { $set: { role } }, { new: true });
-    res.json({ success: true, user: updated });
+    await mongoose.model("User").findByIdAndUpdate(userId, { $set: { role } });
+    res.json({ success: true, version: "SUPER-PRIORITY-V1" });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Redirect any other variations
-app.all("/api/x", (req, res) => res.redirect(307, "/api/auth/x"));
+app.get("/api/version", (req, res) => res.json({ version: "SUPER-PRIORITY-V1" }));
+app.get("/api/ping", (req, res) => res.send("PONG"));
 
-// 🌐 SERVE FRONTEND
-const frontendPath = path.join(__dirname, "frontend/dist");
-app.use(express.static(frontendPath));
-
-// Standard API Routes (Keep them working)
+// Standard Routes
 app.use("/api/auth",       require("./backend/routes/authRoutes"));
 app.use("/api/products",   require("./backend/routes/productRoutes"));
 app.use("/api/categories", require("./backend/routes/categoryRoutes"));
 app.use("/api/settings",   require("./backend/routes/settingsRoutes"));
 
+// ✅ 3. SERVE FRONTEND (Last Priority)
+const frontendPath = path.join(__dirname, "frontend/dist");
+app.use(express.static(frontendPath));
+
 app.get("*", (req, res) => {
-  if (req.url.startsWith("/api")) return res.status(404).json({ error: "API 404" });
+  if (req.url.startsWith("/api")) return res.status(404).json({ error: "API NOT FOUND" });
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 ATOMIC SERVER LIVE ON ${PORT}`));
+// ✅ 4. DATABASE & START
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("🟢 DB CONNECTED");
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`🚀 SUPER-PRIORITY SERVER ON ${PORT}`));
+  })
+  .catch(err => console.error("🔴 DB ERROR:", err));
