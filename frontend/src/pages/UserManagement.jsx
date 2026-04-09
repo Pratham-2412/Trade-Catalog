@@ -49,7 +49,7 @@ const UserManagement = () => {
   const handleRoleChange = async (userId, newRole) => {
     try {
       setUpdating(userId);
-      await API.put(`/auth/users/${userId}`, { role: newRole });
+      await API.put(`/auth/manage-role/${userId}`, { role: newRole });
       setUsers((prev) =>
         prev.map((u) => u._id === userId ? { ...u, role: newRole } : u)
       );
