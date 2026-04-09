@@ -47,18 +47,17 @@ app.use(express.urlencoded({ extended: true }));
 // ✅ Static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ✅ Routes
+// 🔥 EMERGENCY DIRECT BYPASS ROUTE (POST)
+const { updateUserRole } = require("./controllers/authController");
+const { protect, adminOnly } = require("./middleware/authMiddleware");
+app.post("/api/direct-role-update/:id", protect, adminOnly, updateUserRole);
+
 app.use("/api/auth",       require("./routes/authRoutes"));
 app.use("/api/products",   require("./routes/productRoutes"));
 app.use("/api/categories", require("./routes/categoryRoutes"));
 app.use("/api/settings",   require("./routes/settingsRoutes"));
 app.use("/api/inquiries",  require("./routes/inquiryRoutes"));
 app.use("/api/orders",     require("./routes/orderRoutes"));
-
-// 🔥 EMERGENCY DIRECT BYPASS ROUTE
-const { updateUserRole } = require("./controllers/authController");
-const { protect, adminOnly } = require("./middleware/authMiddleware");
-app.put("/api/direct-role-update/:id", protect, adminOnly, updateUserRole);
 
 // ✅ Health check
 app.get("/", (req, res) => {
