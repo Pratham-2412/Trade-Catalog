@@ -338,18 +338,17 @@ const ProductDetail = () => {
           )}
 
           {/* ── Action Buttons ── */}
-          {/* Buy Now + Inquiry Row */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-3">
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <button
               onClick={handleBuyNow}
               disabled={product.stockStatus === "out_of_stock"}
               className="flex-1 flex items-center justify-center gap-2
-                         bg-trade-gold text-white py-3.5 rounded-xl
+                         bg-trade-gold text-white py-4 rounded-xl
                          font-bold hover:bg-amber-600 transition-all
                          shadow-lg shadow-amber-100 disabled:opacity-50
-                         disabled:cursor-not-allowed text-base"
+                         disabled:cursor-not-allowed text-lg"
             >
-              <FiShoppingCart size={18} />
+              <FiShoppingCart size={20} />
               {product.stockStatus === "out_of_stock"
                 ? "Out of Stock"
                 : "Buy Now"}
@@ -357,10 +356,11 @@ const ProductDetail = () => {
             <button
               onClick={() => setShowInquiry(true)}
               className="flex-1 flex items-center justify-center gap-2
-                         bg-trade-navy text-white py-3.5 rounded-xl
-                         font-medium hover:bg-blue-800 transition-colors"
+                         bg-trade-navy text-white py-4 rounded-xl
+                         font-bold hover:bg-blue-800 transition-colors
+                         text-lg shadow-lg shadow-blue-900/10"
             >
-              <FiMessageSquare size={16} />
+              <FiMessageSquare size={18} />
               Send Inquiry
             </button>
           </div>
@@ -375,22 +375,22 @@ const ProductDetail = () => {
                   "_blank"
                 )
               }
-              className="flex items-center justify-center gap-1.5
-                         border-2 border-gray-200 text-gray-600 py-2.5
-                         px-4 rounded-xl font-medium hover:border-trade-navy
-                         hover:text-trade-navy transition-colors text-sm"
+              className="flex-1 flex items-center justify-center gap-2
+                         bg-gray-100 text-gray-700 py-3
+                         px-4 rounded-xl font-bold hover:bg-gray-200
+                         transition-colors text-sm"
             >
-              <FiDownload size={14} />
-              PDF
+              <FiDownload size={16} />
+              Download PDF
             </button>
             <button
               onClick={handleShare}
-              className="flex items-center justify-center gap-1.5
-                         border-2 border-gray-200 text-gray-600 py-2.5
-                         px-4 rounded-xl font-medium hover:border-trade-navy
-                         hover:text-trade-navy transition-colors text-sm"
+              className="flex-1 flex items-center justify-center gap-2
+                         bg-gray-100 text-gray-700 py-3
+                         px-4 rounded-xl font-bold hover:bg-gray-200
+                         transition-colors text-sm"
             >
-              <FiShare2 size={14} />
+              <FiShare2 size={16} />
               Share
             </button>
             {canEdit && (
