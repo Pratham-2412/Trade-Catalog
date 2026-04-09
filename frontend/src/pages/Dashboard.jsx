@@ -667,8 +667,8 @@ const Dashboard = () => {
         </p>
         <p className="text-[10px] text-red-500 font-mono font-bold">
           {(() => {
-            const [ver, setVer] = React.useState("Checking...");
-            React.useEffect(() => {
+            const [ver, setVer] = useState("Checking...");
+            useEffect(() => {
               fetch(`${import.meta.env.VITE_API_URL}/api/version`)
                 .then(r => r.json())
                 .then(d => setVer(`CONNECTED: ${d.version}`))
