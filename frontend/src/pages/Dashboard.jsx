@@ -4,7 +4,7 @@ import {
   FiPackage, FiUsers, FiTag, FiUpload,
   FiMessageSquare, FiStar, FiPlus,
   FiDownload, FiEye, FiCheck, FiX,
-  FiClock,
+  FiClock, FiShoppingCart, FiCreditCard,
 } from "react-icons/fi";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
