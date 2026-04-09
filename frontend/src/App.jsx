@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useAuth }        from "./context/AuthContext";
 import Navbar             from "./components/Navbar";
 import Footer             from "./components/Footer";
@@ -35,6 +36,16 @@ const EditorRoute = ({ children }) => {
 
 function App() {
   const { loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("resetToken");
+    if (token) {
+      navigate(`/reset-password/${token}`, { replace: true });
+    }
+  }, [navigate]);
+
   if (loading) return <Spinner text="Loading..." />;
 
   return (

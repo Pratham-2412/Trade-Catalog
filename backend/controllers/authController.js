@@ -236,7 +236,7 @@ const forgotPassword = async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     const clientUrl = process.env.CLIENT_URL || req.headers?.origin || "https://trade-catalog.vercel.app";
-    const resetURL = `${clientUrl}/reset-password/${rawToken}`;
+    const resetURL = `${clientUrl}/?resetToken=${rawToken}`;
 
     try {
       await sendMail({
