@@ -199,10 +199,8 @@ const MyOrders = () => {
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  <a
-                    href={`/api/orders/${order._id}/invoice`}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    onClick={() => window.open(`${import.meta.env.VITE_API_URL}/api/orders/${order._id}/invoice`, "_blank")}
                     className="flex items-center gap-1.5 px-3 py-2
                                bg-trade-navy text-white text-xs
                                rounded-lg hover:bg-blue-800
@@ -210,7 +208,7 @@ const MyOrders = () => {
                   >
                     <FiDownload size={12} />
                     Invoice
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>

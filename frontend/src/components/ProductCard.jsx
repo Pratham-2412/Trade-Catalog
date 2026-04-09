@@ -213,25 +213,26 @@ const ProductCard = ({ product }) => {
             View
           </Link>
           <button
+            onClick={handleBuyNow}
+            disabled={product.stockStatus === "out_of_stock"}
+            className="flex-1 flex items-center justify-center gap-1.5
+                       bg-trade-gold text-white text-sm py-2.5 rounded-xl
+                       hover:bg-amber-600 transition-colors font-bold
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FiShoppingCart size={14} />
+            Order
+          </button>
+          <button
             onClick={handlePdf}
             className="flex items-center justify-center gap-1.5
-                       border border-trade-gold text-trade-gold
+                       border border-gray-100 text-gray-400
                        text-sm py-2.5 px-3 rounded-xl
-                       hover:bg-trade-gold hover:text-white
+                       hover:border-trade-gold hover:text-trade-gold
                        transition-colors font-medium"
           >
             <FiDownload size={14} />
           </button>
-          <Link
-            to={`/products/${product._id}#inquiry`}
-            className="flex items-center justify-center gap-1.5
-                       border border-gray-200 text-gray-500
-                       text-sm py-2.5 px-3 rounded-xl
-                       hover:border-trade-navy hover:text-trade-navy
-                       transition-colors font-medium"
-          >
-            <FiMessageSquare size={14} />
-          </Link>
         </div>
       </div>
     </div>
