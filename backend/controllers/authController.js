@@ -98,7 +98,7 @@ const register = async (req, res) => {
               <h2 style="color: #1a3c5e;">Welcome, ${user.name}! 👋</h2>
               <p style="color: #555;">Your account has been created successfully.</p>
               <p style="color: #555;">Role: <strong>${role}</strong></p>
-              <a href="${process.env.CLIENT_URL}"
+              <a href="${process.env.CLIENT_URL || req.headers?.origin || 'https://trade-catalog.vercel.app'}"
                 style="display: inline-block; background: #f59e0b; color: white;
                        padding: 12px 30px; border-radius: 8px; text-decoration: none;
                        font-weight: bold; margin-top: 15px;">
@@ -235,7 +235,8 @@ const forgotPassword = async (req, res) => {
     user.resetPasswordExpire  = Date.now() + 15 * 60 * 1000;
     await user.save({ validateBeforeSave: false });
 
-    const resetURL = `${process.env.CLIENT_URL}/reset-password/${rawToken}`;
+    const clientUrl = process.env.CLIENT_URL || req.headers?.origin || "https://trade-catalog.vercel.app";
+    const resetURL = `${clientUrl}/reset-password/${rawToken}`;
 
     try {
       await sendMail({
@@ -352,7 +353,7 @@ const resetPassword = async (req, res) => {
               <p style="color: #555;">
                 Your password has been successfully changed.
               </p>
-              <a href="${process.env.CLIENT_URL}/login"
+              <a href="${process.env.CLIENT_URL || req.headers?.origin || 'https://trade-catalog.vercel.app'}/login"
                 style="display: inline-block; background: #1a3c5e;
                        color: white; padding: 12px 30px;
                        border-radius: 8px; text-decoration: none;
