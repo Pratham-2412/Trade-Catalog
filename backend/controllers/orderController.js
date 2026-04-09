@@ -8,8 +8,8 @@ const Product    = require("../models/Product");
 
 // ── Razorpay instance ──
 const razorpay = new Razorpay({
-  key_id:     process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
+  key_id:     process.env.RAZORPAY_KEY,
+  key_secret: process.env.RAZORPAY_SECRET,
 });
 
 // ── Currency conversion helper (INR base) ──
@@ -106,7 +106,7 @@ const createOrder = async (req, res) => {
     res.status(201).json({
       order,
       razorpayOrder,
-      key:    process.env.RAZORPAY_KEY_ID,
+      key:    process.env.RAZORPAY_KEY,
       amount: totalAmount,
       currency: "INR",
     });
