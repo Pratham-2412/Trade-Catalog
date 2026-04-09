@@ -407,9 +407,15 @@ const updateUserRole = async (req, res) => {
       });
     }
 
+    const updateData = {};
+    if (role !== undefined)     updateData.role     = role;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
+    console.log(`[UpdateRole] Target: ${targetId}, Admin: ${adminId}, Data:`, updateData);
+
     const updatedUser = await User.findByIdAndUpdate(
       targetId,
-      { role, isActive },
+      { $set: updateData },
       { new: true, runValidators: false }
     );
 
@@ -419,8 +425,8 @@ const updateUserRole = async (req, res) => {
 
     res.json({ message: "User updated successfully", user: updatedUser });
   } catch (error) {
-    console.error("Update Role Error:", error.message);
-    res.status(500).json({ error: error.message });
+    console.error("🔥 UPDATE ROLE CRASH:", error);
+    res.status(400).json({ error: error.message });
   }
 };
 
