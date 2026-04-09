@@ -13,7 +13,7 @@ import InquiryForm from "../components/InquiryForm";
 import ProductCard from "../components/ProductCard";
 import Spinner from "../components/Spinner";
 import Barcode from "../components/Barcode";
-import QRCode from "qrcode.react";
+import { QRCodeSVG as QRCode } from "qrcode.react";
 import toast from "react-hot-toast";
 
 const StockBadge = ({ status }) => {
