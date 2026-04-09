@@ -661,9 +661,21 @@ const Dashboard = () => {
       </div>
       
       {/* 🛑 TEMP DEBUG INFO */}
-      <div className="mt-8 p-4 bg-red-50 border border-red-100 rounded-xl">
+      <div className="mt-8 p-4 bg-red-50 border border-red-100 rounded-xl space-y-1">
         <p className="text-[10px] text-red-400 font-mono">
           DEBUG: API_URL = {import.meta.env.VITE_API_URL || "NOT_SET"}
+        </p>
+        <p className="text-[10px] text-red-500 font-mono font-bold">
+          {(() => {
+            const [ver, setVer] = React.useState("Checking...");
+            React.useEffect(() => {
+              fetch(`${import.meta.env.VITE_API_URL}/api/version`)
+                .then(r => r.json())
+                .then(d => setVer(`CONNECTED: ${d.version}`))
+                .catch(e => setVer("SERVER_OFFLINE (404/Timeout)"));
+            }, []);
+            return ver;
+          })()}
         </p>
       </div>
     </div>
