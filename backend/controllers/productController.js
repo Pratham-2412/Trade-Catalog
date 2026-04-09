@@ -320,15 +320,13 @@ const downloadProductPDF = async (req, res) => {
     addRow("Country of Origin", product.origin);
     addRow("Stock Status",      product.stockStatus?.replace("_", " "));
 
-    // ── Auto-Generate Barcode from Product ID ──
-    const idString = product._id.toString();
-    // Convert last 12 chars of MongoDB ID to a numeric-like pattern for the barcode
-    const barcodeData = idString.substring(idString.length - 12).toUpperCase();
+    // ── Auto-Generate Barcode from Product Name ──
+    const barcodeData = product.name.substring(0, 30);
 
     if (barcodeData) {
       try {
         const png = await bwipjs.toBuffer({
-          bcid:     "code128",       // CODE128 supports hex-like strings
+          bcid:     "code128",       // Supports text
           text:     barcodeData,
           scale:    3,
           height:   10,
@@ -337,7 +335,7 @@ const downloadProductPDF = async (req, res) => {
         });
         doc.moveDown(1);
         doc.image(png, { width: 150, align: "center" });
-        doc.fontSize(8).fillColor("#999").text("Product Unique Identifier", { align: "center" }).moveDown(1);
+        doc.fontSize(8).fillColor("#999").text("Scan to Search Online", { align: "center" }).moveDown(1);
       } catch (err) {
         console.error("Barcode PDF error:", err);
       }
