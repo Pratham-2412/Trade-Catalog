@@ -242,19 +242,17 @@ const UserManagement = () => {
                                      focus:ring-2 focus:ring-trade-navy
                                      bg-white cursor-pointer"
                         >
-                          {roles.length > 0 ? (
-                            roles.map((r) => (
-                              <option key={r._id} value={r.name} className="capitalize">
-                                {r.displayName}
-                              </option>
-                            ))
-                          ) : (
-                            ["user", "manager", "admin"].map((r) => (
-                              <option key={r} value={r} className="capitalize">
-                                {r}
-                              </option>
-                            ))
-                          )}
+                          {/* Standard System Roles */}
+                          {!roles.find(r => r.name === "user") && <option value="user">User</option>}
+                          {!roles.find(r => r.name === "manager") && <option value="manager">Manager</option>}
+                          {!roles.find(r => r.name === "admin") && <option value="admin">Admin</option>}
+                          
+                          {/* Custom Created Roles */}
+                          {roles.map((r) => (
+                            <option key={r._id} value={r.name} className="capitalize">
+                              {r.displayName}
+                            </option>
+                          ))}
                         </select>
                       )}
                     </td>
