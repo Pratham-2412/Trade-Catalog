@@ -644,6 +644,13 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      
+      {/* 🛑 TEMP DEBUG INFO */}
+      <div className="mt-8 p-4 bg-red-50 border border-red-100 rounded-xl">
+        <p className="text-[10px] text-red-400 font-mono">
+          DEBUG: API_URL = {import.meta.env.VITE_API_URL || "NOT_SET"}
+        </p>
+      </div>
     </div>
   );
 };
