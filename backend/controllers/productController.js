@@ -115,7 +115,7 @@ const createProduct = async (req, res) => {
       name, description, shortDescription,
       category, price, currency, unit, priceUnit,
       minOrderQuantity, maxOrderQuantity,
-      origin, hsCode, barcode, tags, leadTime,
+      origin, hsCode, tags, leadTime,
       paymentTerms, certifications,
       stockStatus, isFeatured, specifications,
       imageUrl: bodyImageUrl,
@@ -154,7 +154,7 @@ const createProduct = async (req, res) => {
       category, price, currency,
       unit, priceUnit,
       minOrderQuantity, maxOrderQuantity,
-      origin, hsCode, barcode, leadTime, paymentTerms,
+      origin, hsCode, leadTime, paymentTerms,
       certifications: parsedCerts,
       stockStatus:    stockStatus || "in_stock",
       isFeatured:     isFeatured === "true" || isFeatured === true,
@@ -179,7 +179,7 @@ const updateProduct = async (req, res) => {
       "name", "description", "shortDescription", "category",
       "price", "currency", "unit", "priceUnit",
       "minOrderQuantity", "maxOrderQuantity", "origin",
-      "hsCode", "barcode", "leadTime", "paymentTerms", "stockStatus",
+      "hsCode", "leadTime", "paymentTerms", "stockStatus",
     ];
 
     fields.forEach((f) => {
@@ -320,21 +320,24 @@ const downloadProductPDF = async (req, res) => {
     addRow("Country of Origin", product.origin);
     addRow("Stock Status",      product.stockStatus?.replace("_", " "));
 
-    // ── Add Barcode for Product (Barcode field or HS Code) ──
-    const barcodeData = product.barcode || product.hsCode;
+    // ── Auto-Generate Barcode from Product ID ──
+    const idString = product._id.toString();
+    // Convert last 12 chars of MongoDB ID to a numeric-like pattern for the barcode
+    const barcodeData = idString.substring(idString.length - 12).toUpperCase();
+
     if (barcodeData) {
       try {
         const png = await bwipjs.toBuffer({
-          bcid:     "code128",       // Barcode type
-          text:     barcodeData,     // Text to encode
-          scale:    3,               // 3x scaling factor
-          height:   10,              // Bar height, in millimeters
-          includetext: true,         // Show human-readable text
-          textxalign: "center",      // Always good to set this
+          bcid:     "code128",       // CODE128 supports hex-like strings
+          text:     barcodeData,
+          scale:    3,
+          height:   10,
+          includetext: true,
+          textxalign: "center",
         });
         doc.moveDown(1);
         doc.image(png, { width: 150, align: "center" });
-        doc.fontSize(8).fillColor("#999").text(product.barcode ? "Product Barcode" : "HSN Barcode", { align: "center" }).moveDown(1);
+        doc.fontSize(8).fillColor("#999").text("Product Unique Identifier", { align: "center" }).moveDown(1);
       } catch (err) {
         console.error("Barcode PDF error:", err);
       }
