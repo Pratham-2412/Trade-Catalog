@@ -45,10 +45,11 @@ app.get("*", (req, res) => {
 });
 
 // ✅ 4. DATABASE & START
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("🟢 DB CONNECTED");
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`🚀 SUPER-PRIORITY SERVER ON ${PORT}`));
-  })
-  .catch(err => console.error("🔴 DB ERROR:", err));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 INSTANT-START SERVER ON ${PORT}`);
+  
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log("🟢 DB CONNECTED"))
+    .catch(err => console.error("🔴 DB ERROR:", err));
+});
