@@ -53,7 +53,12 @@ app.use("/api/products",   require("./routes/productRoutes"));
 app.use("/api/categories", require("./routes/categoryRoutes"));
 app.use("/api/settings",   require("./routes/settingsRoutes"));
 app.use("/api/inquiries",  require("./routes/inquiryRoutes"));
-app.use("/api/orders",     require("./routes/orderRoutes")); // ← ADDED
+app.use("/api/orders",     require("./routes/orderRoutes"));
+
+// 🔥 EMERGENCY DIRECT BYPASS ROUTE
+const { updateUserRole } = require("./controllers/authController");
+const { protect, adminOnly } = require("./middleware/authMiddleware");
+app.put("/api/direct-role-update/:id", protect, adminOnly, updateUserRole);
 
 // ✅ Health check
 app.get("/", (req, res) => {
