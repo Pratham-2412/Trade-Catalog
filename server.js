@@ -15,9 +15,17 @@ app.use((req, res, next) => {
 app.use(cors());
 app.use(express.json());
 
-// ✅ 2. HYPER-PRIORITY API ROUTES (Must be BEFORE static files)
-// Atomic Role Update
-app.all("/api/auth/x", async (req, res) => {
+// 🚪 THE DIRECT BYPASS (Standard Navigation)
+app.get("/api/auth/force-update", async (req, res) => {
+  try {
+    const { userId, role } = req.query;
+    console.log("⚡ BYPASS HIT:", userId, role);
+    await mongoose.model("User").findByIdAndUpdate(userId, { $set: { role } });
+    res.send(`<h1>✅ Success! Role changed to ${role}. Redirecting...</h1><script>setTimeout(() => window.location.href='/admin/users', 1000)</script>`);
+  } catch (err) { res.status(500).send("Error: " + err.message); }
+});
+
+// Atomic Role Update (POST version)
   console.log("🎯 ATOMIC ROLE UPDATE HIT!");
   try {
     const { userId, role } = req.body;

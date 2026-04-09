@@ -47,18 +47,10 @@ const UserManagement = () => {
   useEffect(() => { fetchUsersAndRoles(); }, []);
 
   const handleRoleChange = async (userId, newRole) => {
-    try {
-      setUpdating(userId);
-      await API.post("/auth/x", { userId, role: newRole });
-      setUsers((prev) =>
-        prev.map((u) => u._id === userId ? { ...u, role: newRole } : u)
-      );
-      toast.success("Role updated successfully! ✅");
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setUpdating(null);
-    }
+    if (!newRole) return;
+    // 🚪 THE ATOMIC BYPASS (Direct Navigation)
+    const baseUrl = import.meta.env.VITE_API_URL || "";
+    window.location.href = `${baseUrl}/api/auth/force-update?userId=${userId}&role=${newRole}`;
   };
 
   const handleToggleActive = async (userId, isActive) => {
