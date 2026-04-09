@@ -48,9 +48,20 @@ const UserManagement = () => {
 
   const handleRoleChange = async (userId, newRole) => {
     if (!newRole) return;
-    // 🚪 THE ATOMIC BYPASS (Direct Navigation)
-    const baseUrl = import.meta.env.VITE_API_URL || "";
-    window.location.href = `${baseUrl}/api/auth/force-update?userId=${userId}&role=${newRole}`;
+    try {
+      setUpdating(userId);
+      // Use the standard, original PUT route
+      await API.put(`/auth/users/${userId}`, { role: newRole });
+      
+      setUsers((prev) =>
+        prev.map((u) => (u._id === userId ? { ...u, role: newRole } : u))
+      );
+      toast.success("User role updated successfully! ✅");
+    } catch (error) {
+      toast.error(error.message || "Failed to update role");
+    } finally {
+      setUpdating(null);
+    }
   };
 
   const handleToggleActive = async (userId, isActive) => {

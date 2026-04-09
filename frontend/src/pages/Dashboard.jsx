@@ -65,15 +65,6 @@ const Dashboard = () => {
   const [currencyData,  setCurrencyData]  = useState([]);
   const [timelineData,  setTimelineData]  = useState([]);
 
-  // 🛑 DIAGNOSTIC STATE
-  const [serverVer, setServerVer] = useState("Checking...");
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/version`)
-      .then(r => r.json())
-      .then(d => setServerVer(`CONNECTED: ${d.version}`))
-      .catch(e => setServerVer("SERVER_OFFLINE (404/Timeout)"));
-  }, []);
-
   useEffect(() => {
     const load = async () => {
       try {
@@ -669,15 +660,6 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {/* 🛑 TEMP DEBUG INFO */}
-      <div className="mt-8 p-4 bg-red-50 border border-red-100 rounded-xl space-y-1">
-        <p className="text-[10px] text-red-400 font-mono">
-          DEBUG: API_URL = {import.meta.env.VITE_API_URL || "NOT_SET"}
-        </p>
-        <p className="text-[10px] text-red-500 font-mono font-bold">
-          {serverVer}
-        </p>
-      </div>
     </div>
   );
 };
