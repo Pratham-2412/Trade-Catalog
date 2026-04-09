@@ -15,6 +15,9 @@ connectDB()
     console.error("DB Connection Error:", err);
   });
 
+// 🚨 ULTIMATE SERVER BEACON (Check this at /beacon)
+app.get("/beacon", (req, res) => res.send("<h1>🟢 SERVER IS ALIVE AND RUNNING!</h1>"));
+
 // ✅ CORS (Unified Hosting)
 app.use(cors({ origin: true, credentials: true }));
 
