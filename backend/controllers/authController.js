@@ -407,17 +407,19 @@ const updateUserRole = async (req, res) => {
       });
     }
 
-    const user = await User.findById(targetId);
-    if (!user) {
+    const updatedUser = await User.findByIdAndUpdate(
+      targetId,
+      { role, isActive },
+      { new: true, runValidators: false }
+    );
+
+    if (!updatedUser) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (role !== undefined) user.role = role;
-    if (isActive !== undefined) user.isActive = isActive;
-
-    await user.save();
-    res.json({ message: "User updated successfully", user });
+    res.json({ message: "User updated successfully", user: updatedUser });
   } catch (error) {
+    console.error("Update Role Error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
