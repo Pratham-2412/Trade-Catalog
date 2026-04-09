@@ -421,8 +421,6 @@ const ProductDetail = () => {
                 {deleting ? "..." : "Delete"}
               </button>
             )}
-          <div className="flex gap-2 flex-wrap">
-            ...
           </div>
 
           {/* New Prominent Barcode Spot */}
