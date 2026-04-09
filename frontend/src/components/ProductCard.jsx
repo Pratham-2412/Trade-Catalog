@@ -1,8 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FiDownload, FiEye, FiTag, FiPackage,
   FiStar, FiMapPin, FiShoppingCart, FiMessageSquare,
 } from "react-icons/fi";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 const StockBadge = ({ status }) => {
   const styles = {
@@ -23,9 +25,26 @@ const StockBadge = ({ status }) => {
 };
 
 const ProductCard = ({ product }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
   const handlePdf = (e) => {
     e.preventDefault();
     window.open(`${import.meta.env.VITE_API_URL}/api/products/${product._id}/pdf`, "_blank");
+  };
+
+  const handleBuyNow = (e) => {
+    e.preventDefault();
+    if (!user) {
+      toast.error("Please login to place an order");
+      navigate("/login");
+      return;
+    }
+    if (product.stockStatus === "out_of_stock") {
+      toast.error("This product is out of stock");
+      return;
+    }
+    navigate(`/checkout/${product._id}`);
   };
 
   return (
