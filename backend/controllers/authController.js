@@ -407,26 +407,34 @@ const updateUserRole = async (req, res) => {
       });
     }
 
+    console.log("DEBUG: updateUserRole hit!");
+    console.log("DEBUG: req.params.id =", req.params.id);
+    console.log("DEBUG: req.body =", req.body);
+
     const updateData = {};
     if (role !== undefined)     updateData.role     = role;
     if (isActive !== undefined) updateData.isActive = isActive;
 
-    console.log(`[UpdateRole] Target: ${targetId}, Admin: ${adminId}, Data:`, updateData);
-
+    // Direct update logic
     const updatedUser = await User.findByIdAndUpdate(
-      targetId,
+      req.params.id,
       { $set: updateData },
       { new: true, runValidators: false }
     );
 
     if (!updatedUser) {
-      return res.status(404).json({ error: "User not found" });
+       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json({ message: "User updated successfully", user: updatedUser });
+    res.json({ message: "Updated!", user: updatedUser });
   } catch (error) {
-    console.error("🔥 UPDATE ROLE CRASH:", error);
-    res.status(400).json({ error: error.message });
+    console.error("DEBUG: Update Error:", error);
+    // TEMPORARY: Return 418 to see if it reaches hero
+    res.status(418).json({ 
+      error: "Controller Hit but failed",
+      message: error.message,
+      data_sent: req.body
+    });
   }
 };
 
