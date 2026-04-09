@@ -421,7 +421,24 @@ const ProductDetail = () => {
                 {deleting ? "..." : "Delete"}
               </button>
             )}
+          <div className="flex gap-2 flex-wrap">
+            ...
           </div>
+
+          {/* New Prominent Barcode Spot */}
+          {product.name && (
+            <div className="mt-6 flex flex-col items-center bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+              <Barcode value={product.name.substring(0, 25)} displayValue={true} />
+              <div className="mt-3 border-t border-gray-50 w-full pt-3 text-center">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">
+                   Professional Search Barcode
+                </p>
+                <p className="text-[11px] text-trade-navy mt-1 font-bold">
+                  Scan to Search: "{product.name}"
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -467,19 +484,7 @@ const ProductDetail = () => {
                   value={product.origin} />
                 <DetailRow icon={FiHash}    label="HS Code"
                   value={product.hsCode} />
-                {product.name && (
-                  <div className="mt-4 flex flex-col items-center bg-white p-6 rounded-2xl border border-gray-200 shadow-sm max-w-sm mx-auto">
-                    <Barcode value={product.name.substring(0, 25)} displayValue={true} />
-                    <div className="mt-2 border-t border-gray-100 w-full pt-2 text-center">
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">
-                        Global Search Barcode
-                      </p>
-                      <p className="text-[9px] text-blue-500 mt-1 uppercase font-medium">
-                        Scan to find online: "{product.name}"
-                      </p>
-                    </div>
-                  </div>
-                )}
+
                 <DetailRow icon={FiPackage} label="Unit"
                    value={product.unit} />
               </div>
