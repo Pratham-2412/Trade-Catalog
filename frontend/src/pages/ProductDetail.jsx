@@ -467,12 +467,19 @@ const ProductDetail = () => {
                   value={product.origin} />
                 <DetailRow icon={FiHash}    label="HS Code"
                   value={product.hsCode} />
-                <div className="mt-2 text-center bg-gray-50 p-4 rounded-xl border border-dashed border-gray-200 shadow-inner">
-                  <Barcode value={product.name.substring(0, 30)} height={50} width={2} />
-                  <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-widest font-bold">
-                    Scan to Search Product Online
-                  </p>
-                </div>
+                {product.name && (
+                  <div className="mt-4 flex flex-col items-center bg-white p-6 rounded-2xl border border-gray-200 shadow-sm max-w-sm mx-auto">
+                    <Barcode value={product.name.substring(0, 25)} displayValue={true} />
+                    <div className="mt-2 border-t border-gray-100 w-full pt-2 text-center">
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">
+                        Global Search Barcode
+                      </p>
+                      <p className="text-[9px] text-blue-500 mt-1 uppercase font-medium">
+                        Scan to find online: "{product.name}"
+                      </p>
+                    </div>
+                  </div>
+                )}
                 <DetailRow icon={FiPackage} label="Unit"
                    value={product.unit} />
               </div>

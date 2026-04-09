@@ -9,12 +9,14 @@ const Barcode = ({ value, format = "CODE128", width = 2, height = 50, displayVal
       try {
         JsBarcode(barcodeRef.current, value, {
           format,
-          width,
-          height,
+          width: 2.5,  // Slightly wider for that retail look
+          height: 60,  // Taller bars
           displayValue,
-          fontSize: 14,
-          margin: 10,
+          font: "monospace",
+          fontSize: 16,
+          textMargin: 6,
           background: "transparent",
+          lineColor: "#000",
         });
       } catch (error) {
         console.error("Barcode generation error:", error);

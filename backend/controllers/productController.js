@@ -320,22 +320,24 @@ const downloadProductPDF = async (req, res) => {
     addRow("Country of Origin", product.origin);
     addRow("Stock Status",      product.stockStatus?.replace("_", " "));
 
-    // ── Auto-Generate Barcode from Product Name ──
-    const barcodeData = product.name.substring(0, 30);
+    // ── Auto-Generate Professional Barcode from Product Name ──
+    const barcodeData = product.name.substring(0, 25);
 
     if (barcodeData) {
       try {
         const png = await bwipjs.toBuffer({
-          bcid:     "code128",       // Supports text
+          bcid:     "code128",
           text:     barcodeData,
-          scale:    3,
-          height:   10,
-          includetext: true,
+          scale:    4,               // Higher scale for PDF sharpness
+          height:   15,              // Taller bars for that retail look
+          includetext: true,         // Display name under bars
+          textfont: "OCRB",          // Professional barcode font look
+          textsize: 10,
           textxalign: "center",
         });
         doc.moveDown(1);
-        doc.image(png, { width: 150, align: "center" });
-        doc.fontSize(8).fillColor("#999").text("Scan to Search Online", { align: "center" }).moveDown(1);
+        doc.image(png, { width: 180, align: "center" });
+        doc.fontSize(8).fillColor("#999").text('SCAN TO SEARCH PRODUCT ONLINE', { align: "center" }).moveDown(1);
       } catch (err) {
         console.error("Barcode PDF error:", err);
       }
