@@ -297,8 +297,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      </div>
-
       {/* Recent Orders Section */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-8">
         <div className="flex items-center justify-between mb-6">
