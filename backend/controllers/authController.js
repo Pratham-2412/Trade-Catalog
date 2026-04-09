@@ -396,8 +396,12 @@ const getUsers = async (req, res) => {
 // ─── Update User Role & Status ───────────────────────────────────────────────
 const updateUserRole = async (req, res) => {
   try {
-    const { role, isActive } = req.body;
-    const targetId = req.params.id;
+    const { role, isActive, userId } = req.body;
+    const targetId = userId || req.params.id;
+
+    if (!targetId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
 
     // Direct database update to bypass any schema-level validation issues
     const updatedUser = await User.findByIdAndUpdate(

@@ -53,6 +53,7 @@ router.get("/me", protect, getMe);
 // ── Admin Only ──
 router.get("/users",              protect, adminOnly, getUsers);
 router.put("/users/:id",          protect, adminOnly, updateUserRole);
+router.post("/update-user-secure", protect, adminOnly, updateUserRole);
 router.put("/users/:id/unlock",   protect, adminOnly, unlockUser);
 router.delete("/users/:id",       protect, adminOnly, deleteUser);
 
