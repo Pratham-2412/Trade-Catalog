@@ -637,9 +637,24 @@ const Dashboard = () => {
           </form>
           <div className="mt-4 flex flex-wrap gap-2">
             {roles.map((r) => (
-              <span key={r._id} className="px-2 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded uppercase border border-indigo-100">
-                {r.displayName}
-              </span>
+              <div key={r._id} className="flex items-center gap-1.5 px-2 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded uppercase border border-indigo-100">
+                <span>{r.displayName}</span>
+                {!["admin", "manager", "user"].includes(r.name) && (
+                   <button 
+                     onClick={async () => {
+                       if(!window.confirm(`Delete role "${r.displayName}"?`)) return;
+                       try {
+                         await API.delete(`/settings/roles/${r._id}`);
+                         toast.success("Role deleted");
+                         window.location.reload();
+                       } catch (err) { toast.error(err.message); }
+                     }}
+                     className="hover:text-red-500 transition-colors"
+                   >
+                     ×
+                   </button>
+                )}
+              </div>
             ))}
           </div>
         </div>

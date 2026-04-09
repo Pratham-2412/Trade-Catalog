@@ -47,8 +47,8 @@ app.use(express.urlencoded({ extended: true }));
 // 🔥 HIGHEST PRIORITY EMERGENCY ROUTES
 const { updateUserRole } = require("./controllers/authController");
 const { protect, adminOnly } = require("./middleware/authMiddleware");
-app.post("/api/auth/update-user-secure", protect, adminOnly, updateUserRole);
-app.get("/api/version", (req, res) => res.json({ version: "PROD-SECURE-ID-V1", status: "READY" }));
+app.post("/api/x", protect, adminOnly, updateUserRole);
+app.get("/api/version", (req, res) => res.json({ version: "SH-CIRCUIT-V1", status: "READY" }));
 
 // ✅ Static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
