@@ -122,6 +122,24 @@ const UserManagement = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+      {/* 🛑 EMERGENCY DEBUG BUTTON */}
+      <div className="mb-6 p-4 bg-red-100 rounded-2xl border-2 border-red-300">
+        <button 
+          onClick={async () => {
+            try {
+              const res = await fetch(`${import.meta.env.VITE_API_URL}/api/version`);
+              const data = await res.json();
+              alert(`✅ SUCCESS! Server found. Version: ${data.version}`);
+            } catch (err) {
+              alert(`❌ FAILED! The server did not respond. This means your Render settings are blocking the backend. Please check "Root Directory" in Render dashboard - it should be empty!`);
+            }
+          }}
+          className="w-full py-3 bg-red-600 text-white font-bold rounded-xl animate-pulse"
+        >
+          🚨 CLICK HERE TO TEST SERVER CONNECTION
+        </button>
+      </div>
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="font-display font-bold text-3xl text-trade-navy">
