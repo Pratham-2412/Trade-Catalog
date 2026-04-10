@@ -569,12 +569,14 @@ const Checkout = () => {
               {/* Payment Methods */}
               <div className="mb-5">
                 <p className="label mb-3">Payment via Razorpay</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
                     { icon: "💳", label: "Card"       },
                     { icon: "📱", label: "UPI"        },
                     { icon: "🏦", label: "NetBanking" },
                     { icon: "👛", label: "Wallet"     },
+                    { icon: "⚡", label: "Direct Pay" },
+                    { icon: "1️⃣", label: "1 Payment"  },
                   ].map((method) => (
                     <div key={method.label}
                       className="flex flex-col items-center p-3
@@ -586,21 +588,6 @@ const Checkout = () => {
                       </span>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              {/* Test Card Info */}
-              <div className="bg-amber-50 border border-amber-200
-                              rounded-xl p-4 mb-5">
-                <p className="text-amber-800 font-semibold text-sm mb-2">
-                  🧪 Test Mode — Use these details:
-                </p>
-                <div className="space-y-1 text-xs text-amber-700">
-                  <p>Card: <strong>4111 1111 1111 1111</strong></p>
-                  <p>Expiry: <strong>Any future date</strong></p>
-                  <p>CVV: <strong>Any 3 digits</strong></p>
-                  <p>OTP: <strong>1234</strong></p>
-                  <p>UPI: <strong>success@razorpay</strong></p>
                 </div>
               </div>
 
