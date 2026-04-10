@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const jwt    = require("jsonwebtoken");
 const User   = require("../models/User");
+const OTP    = require("../models/OTP");
 const sendMail = require("../config/nodemailer");
 
 // ── Generate JWT ──
@@ -42,13 +43,91 @@ const isValidPassword = (password) => {
   return errors;
 };
 
+// ─── Send OTP ─────────────────────────────────────────────────────────────────
+const sendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || !isValidEmail(email)) {
+      return res.status(400).json({ error: "Please enter a valid email address" });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already registered" });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Delete any old OTPs for this email
+    await OTP.deleteMany({ email });
+    await OTP.create({ email, otp });
+
+    // Send email
+    await sendMail({
+      to: email,
+      subject: "Verification Code - TradeCatalog",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #1a3c5e; padding: 25px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0;">TradeCatalog</h1>
+          </div>
+          <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e2e8f0;">
+            <h2 style="color: #1a3c5e;">Verify Your Email</h2>
+            <p style="color: #555;">Use the following code to complete your registration:</p>
+            <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; text-align: center; margin: 25px 0;">
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1a3c5e;">${otp}</span>
+            </div>
+            <p style="color: #64748b; font-size: 13px;">This code will expire in 5 minutes.</p>
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+            <p style="color: #94a3b8; font-size: 11px; text-align: center;">
+              If you didn't request this, please ignore this email.
+            </p>
+          </div>
+        </div>
+      `
+    });
+
+    res.json({ message: "Verification code sent to your email! ✅" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ─── Verify OTP ──────────────────────────────────────────────────────────────
+const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ error: "Email and code are required" });
+    }
+
+    const validOTP = await OTP.findOne({ email, otp });
+    if (!validOTP) {
+      return res.status(400).json({ error: "Invalid or expired verification code" });
+    }
+
+    res.json({ success: true, message: "Email verified successfully! ✅" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // ─── Register ─────────────────────────────────────────────────────────────────
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, otp } = req.body;
 
-    if (!name?.trim() || !email?.trim() || !password) {
-      return res.status(400).json({ error: "All fields are required" });
+    if (!name?.trim() || !email?.trim() || !password || !otp) {
+      return res.status(400).json({ error: "All fields including OTP are required" });
+    }
+
+    // Verify OTP again during final registration
+    const validOTP = await OTP.findOne({ email, otp });
+    if (!validOTP) {
+      return res.status(400).json({ error: "Verification code is invalid or has expired" });
     }
 
     if (name.trim().length < 2) {
@@ -114,6 +193,9 @@ const register = async (req, res) => {
     } catch (emailError) {
       console.error("Welcome email failed:", emailError.message);
     }
+
+    // Final clean up: delete the used OTP
+    await OTP.deleteMany({ email });
 
     res.status(201).json({
       ...userResponse(user, token),
@@ -467,4 +549,6 @@ module.exports = {
   updateUserRole,
   unlockUser,
   deleteUser,
+  sendOTP,
+  verifyOTP,
 };

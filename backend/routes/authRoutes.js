@@ -12,6 +12,8 @@ const {
   updateUserRole,
   unlockUser,
   deleteUser,
+  sendOTP,
+  verifyOTP,
 } = require("../controllers/authController");
 
 const { protect, adminOnly } = require("../middleware/authMiddleware");
@@ -42,6 +44,8 @@ const forgotLimiter = rateLimit({
 });
 
 // ── Public Routes ──
+router.post("/send-otp",              sendOTP);
+router.post("/verify-otp",            verifyOTP);
 router.post("/register",              registerLimiter, register);
 router.post("/login",                 loginLimiter,    login);
 router.post("/forgot-password",       forgotLimiter,   forgotPassword);
