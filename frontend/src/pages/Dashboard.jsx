@@ -11,7 +11,6 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, LineChart, Line,
   PieChart, Pie, Cell, Legend,
-  AreaChart, Area,
 } from "recharts";
 import API from "../api/axios";
 import {
@@ -455,7 +454,6 @@ const Dashboard = () => {
   const [recentOrders,  setRecentOrders]  = useState([]);
   const [categoryData,  setCategoryData]  = useState([]);
   const [currencyData,  setCurrencyData]  = useState([]);
-  const [timelineData,  setTimelineData]  = useState([]);
   const [stockData,     setStockData]     = useState([]);
   const [priceRangeData, setPriceRangeData] = useState([]);
 
@@ -517,34 +515,7 @@ const Dashboard = () => {
         });
         setCurrencyData(Object.entries(curMap).map(([name, value]) => ({ name, value })));
 
-        // ── Timeline: sorted chronologically with gap-filling ──
-        const monthMap = {};
-        const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-        prods.forEach((p) => {
-          const d = new Date(p.createdAt);
-          const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
-          monthMap[key] = (monthMap[key] || 0) + 1;
-        });
-        const sortedKeys = Object.keys(monthMap).sort();
-        if (sortedKeys.length > 0) {
-          // Fill gaps between first and last month
-          const [startY, startM] = sortedKeys[0].split("-").map(Number);
-          const [endY, endM]     = sortedKeys[sortedKeys.length - 1].split("-").map(Number);
-          const filled = [];
-          let y = startY, m = startM;
-          while (y < endY || (y === endY && m <= endM)) {
-            const key = `${y}-${String(m).padStart(2, "0")}`;
-            filled.push({
-              month: `${MONTH_NAMES[m]} '${String(y).slice(2)}`,
-              count: monthMap[key] || 0,
-            });
-            m++;
-            if (m > 11) { m = 0; y++; }
-          }
-          setTimelineData(filled.slice(-12)); // Last 12 months max
-        } else {
-          setTimelineData([]);
-        }
+
 
         // ── Stock Status Distribution ──
         const stockMap = { in_stock: 0, limited: 0, out_of_stock: 0 };
@@ -797,46 +768,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Products Over Time — Area Chart */}
-      <div className="bg-white rounded-xl border border-gray-100
-                      shadow-sm p-6 mb-6">
-        <h3 className="font-display font-semibold text-gray-900 mb-6">
-          Products Added Over Time
-        </h3>
-        {timelineData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={250}>
-            <AreaChart data={timelineData}>
-              <defs>
-                <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-              <Tooltip
-                contentStyle={{ borderRadius: "10px", fontSize: "13px", border: "1px solid #eee" }}
-                formatter={(value) => [`${value} products`, "Added"]}
-              />
-              <Area
-                type="monotone"
-                dataKey="count"
-                stroke="#f59e0b"
-                strokeWidth={2.5}
-                fill="url(#colorCount)"
-                dot={{ fill: "#f59e0b", r: 4, strokeWidth: 2, stroke: "#fff" }}
-                activeDot={{ r: 7, stroke: "#f59e0b", strokeWidth: 2 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="h-48 flex items-center justify-center
-                          text-gray-300">
-            No data yet
-          </div>
-        )}
-      </div>
+
 
       {/* New Charts Row — Stock Status + Price Range */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
