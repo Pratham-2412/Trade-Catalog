@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth }        from "./context/AuthContext";
 import Navbar             from "./components/Navbar";
 import Footer             from "./components/Footer";
+import Home               from "./pages/Home";
 import ProductList        from "./pages/ProductList";
 import ProductDetail      from "./pages/ProductDetail";
 import AddProduct         from "./pages/AddProduct";
@@ -43,6 +44,7 @@ const EditorRoute = ({ children }) => {
 function App() {
   const { loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -52,15 +54,35 @@ function App() {
     }
   }, [navigate]);
 
+  // Premium Global Scroll reveal
+  useEffect(() => {
+    // Small delay to ensure route-changed DOM is fully ready
+    const timer = setTimeout(() => {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("active");
+          }
+        });
+      }, { threshold: 0.05, rootMargin: "0px 0px 50px 0px" }); // Fixed triggering
+
+      document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+
   if (loading) return <Spinner text="Loading..." />;
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
-        <Routes>
+        <div key={location.pathname} className="animate-page">
+          <Routes>
           {/* ── Public ── */}
-          <Route path="/" element={<ProductList />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/products" element={<ProductList />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -112,6 +134,7 @@ function App() {
           {/* ── Fallback ── */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </div>
       </main>
       <Footer />
     </div>

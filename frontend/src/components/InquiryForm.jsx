@@ -43,16 +43,28 @@ const InquiryForm = ({ product, onClose }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100
-                    shadow-lg p-6">
+    <div className="rounded-2xl border p-6 relative overflow-hidden backdrop-blur-xl"
+         style={{ background:"rgba(10,22,40,0.85)", borderColor:"rgba(255,255,255,0.08)", boxShadow:"0 25px 50px -12px rgba(0,0,0,0.5)" }}>
+         
+      <style>{`
+        @keyframes shimmerInquiry {
+          0%,100% { transform:translateX(-100%); }
+          60% { transform:translateX(100%); }
+        }
+      `}</style>
+      
+      {/* Decorative Glow Elements */}
+      <div className="absolute top-[-50px] left-[-50px] w-48 h-48 bg-blue-600/20 rounded-full blur-[60px] pointer-events-none" />
+      <div className="absolute bottom-[-50px] right-[-50px] w-48 h-48 bg-amber-500/20 rounded-full blur-[60px] pointer-events-none" />
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-6 relative z-10 border-b pb-4" style={{ borderColor:"rgba(255,255,255,0.06)" }}>
         <div>
-          <h3 className="font-display font-bold text-xl text-trade-navy">
-            Send Inquiry
+          <h3 className="font-bold text-2xl text-white tracking-wide flex items-center gap-2" style={{ fontFamily:"Poppins,sans-serif" }}>
+            <FiMessageSquare style={{ color:"#f59e0b" }} /> Send Inquiry
           </h3>
-          <p className="text-gray-400 text-sm mt-0.5">
-            About: <span className="font-medium text-gray-600">
+          <p className="text-sm mt-1 flex gap-1" style={{ color:"rgba(255,255,255,0.5)" }}>
+            About: <span className="font-semibold" style={{ color:"#93c5fd" }}>
               {product.name}
             </span>
           </p>
@@ -60,37 +72,41 @@ const InquiryForm = ({ product, onClose }) => {
         {onClose && (
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 rounded-xl transition-all"
+            style={{ color:"rgba(255,255,255,0.5)", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.05)" }}
+            onMouseEnter={e => {e.currentTarget.style.color="#fff"; e.currentTarget.style.background="rgba(239,68,68,0.2)"; e.currentTarget.style.borderColor="rgba(239,68,68,0.4)";}}
+            onMouseLeave={e => {e.currentTarget.style.color="rgba(255,255,255,0.5)"; e.currentTarget.style.background="rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.05)";}}
           >
-            <FiX className="text-gray-400" />
+            <FiX size={18} />
           </button>
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
 
         {/* Name + Email */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="label">Full Name *</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color:"rgba(255,255,255,0.6)" }}>Full Name *</label>
             <div className="relative">
-              <FiUser className="absolute left-3 top-1/2 -translate-y-1/2
-                                 text-gray-400 text-sm" />
+              <FiUser className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color:"rgba(255,255,255,0.4)" }} />
               <input
                 name="name"
                 value={form.name}
                 onChange={handleChange}
                 required
                 placeholder="Your name"
-                className="input-field pl-9 text-sm"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none"
+                style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff" }}
+                onFocus={e => e.target.style.borderColor = "#3b82f6"}
+                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
               />
             </div>
           </div>
           <div>
-            <label className="label">Email *</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color:"rgba(255,255,255,0.6)" }}>Email *</label>
             <div className="relative">
-              <FiMail className="absolute left-3 top-1/2 -translate-y-1/2
-                                 text-gray-400 text-sm" />
+              <FiMail className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color:"rgba(255,255,255,0.4)" }} />
               <input
                 name="email"
                 type="email"
@@ -98,7 +114,10 @@ const InquiryForm = ({ product, onClose }) => {
                 onChange={handleChange}
                 required
                 placeholder="your@email.com"
-                className="input-field pl-9 text-sm"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none"
+                style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff" }}
+                onFocus={e => e.target.style.borderColor = "#3b82f6"}
+                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
               />
             </div>
           </div>
@@ -107,27 +126,32 @@ const InquiryForm = ({ product, onClose }) => {
         {/* Phone + Company */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="label">Phone</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color:"rgba(255,255,255,0.6)" }}>Phone</label>
             <div className="relative">
-              <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2
-                                  text-gray-400 text-sm" />
+              <FiPhone className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color:"rgba(255,255,255,0.4)" }} />
               <input
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
                 placeholder="+1 234 567 890"
-                className="input-field pl-9 text-sm"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none"
+                style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff" }}
+                onFocus={e => e.target.style.borderColor = "#3b82f6"}
+                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
               />
             </div>
           </div>
           <div>
-            <label className="label">Company</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color:"rgba(255,255,255,0.6)" }}>Company</label>
             <input
               name="company"
               value={form.company}
               onChange={handleChange}
               placeholder="Your company name"
-              className="input-field text-sm"
+              className="w-full px-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none"
+              style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff" }}
+              onFocus={e => e.target.style.borderColor = "#3b82f6"}
+              onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
             />
           </div>
         </div>
@@ -135,17 +159,20 @@ const InquiryForm = ({ product, onClose }) => {
         {/* Country + Quantity */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="label">Country</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color:"rgba(255,255,255,0.6)" }}>Country</label>
             <input
               name="country"
               value={form.country}
               onChange={handleChange}
               placeholder="Your country"
-              className="input-field text-sm"
+              className="w-full px-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none"
+              style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff" }}
+              onFocus={e => e.target.style.borderColor = "#3b82f6"}
+              onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
             />
           </div>
           <div>
-            <label className="label">Quantity Required</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color:"rgba(255,255,255,0.6)" }}>Quantity Required</label>
             <div className="flex gap-2">
               <input
                 name="quantity"
@@ -153,14 +180,20 @@ const InquiryForm = ({ product, onClose }) => {
                 value={form.quantity}
                 onChange={handleChange}
                 min="1"
-                className="input-field text-sm"
+                className="w-full px-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none"
+                style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff" }}
+                onFocus={e => e.target.style.borderColor = "#3b82f6"}
+                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
               />
               <input
                 name="unit"
                 value={form.unit}
                 onChange={handleChange}
                 placeholder="unit"
-                className="input-field text-sm w-24"
+                className="w-24 px-3 py-2.5 rounded-xl text-sm transition-all focus:outline-none text-center"
+                style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff" }}
+                onFocus={e => e.target.style.borderColor = "#3b82f6"}
+                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
               />
             </div>
           </div>
@@ -168,10 +201,9 @@ const InquiryForm = ({ product, onClose }) => {
 
         {/* Message */}
         <div>
-          <label className="label">Message *</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color:"rgba(255,255,255,0.6)" }}>Message *</label>
           <div className="relative">
-            <FiMessageSquare className="absolute left-3 top-3
-                                        text-gray-400 text-sm" />
+            <FiMessageSquare className="absolute left-3.5 top-3.5" style={{ color:"rgba(255,255,255,0.4)" }} />
             <textarea
               name="message"
               value={form.message}
@@ -179,23 +211,28 @@ const InquiryForm = ({ product, onClose }) => {
               required
               rows={4}
               placeholder="Describe your requirements..."
-              className="input-field pl-9 text-sm resize-none"
+              className="w-full pl-10 pr-4 py-3 rounded-xl text-sm transition-all focus:outline-none resize-none"
+              style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff" }}
+              onFocus={e => e.target.style.borderColor = "#3b82f6"}
+              onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
             />
           </div>
         </div>
 
         {/* Product Info */}
-        <div className="bg-trade-light rounded-xl p-3 flex items-center gap-3">
-          <FiPackage className="text-trade-navy flex-shrink-0" />
+        <div className="rounded-xl p-4 flex items-center gap-4 border" style={{ background:"rgba(255,255,255,0.02)", borderColor:"rgba(255,255,255,0.06)" }}>
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center border" style={{ background:"rgba(255,255,255,0.03)", borderColor:"rgba(255,255,255,0.1)" }}>
+            <FiPackage size={20} style={{ color:"#93c5fd" }} />
+          </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-500">Inquiring about</p>
-            <p className="text-sm font-medium text-trade-navy truncate">
+            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color:"rgba(255,255,255,0.4)" }}>Inquiring about</p>
+            <p className="text-sm font-semibold truncate text-white">
               {product.name}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-500">Price</p>
-            <p className="text-sm font-bold text-trade-navy">
+            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color:"rgba(255,255,255,0.4)" }}>Price</p>
+            <p className="text-sm font-bold text-amber-400">
               {product.price} {product.currency}
             </p>
           </div>
@@ -205,20 +242,26 @@ const InquiryForm = ({ product, onClose }) => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-trade-navy text-white font-medium
-                     rounded-xl hover:bg-blue-800 transition-colors
-                     disabled:opacity-60 flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-xl transition-all font-bold text-sm tracking-wider uppercase relative overflow-hidden flex items-center justify-center gap-2"
+          style={{ 
+            background:"linear-gradient(135deg,#f59e0b,#d97706)", 
+            color:"#fff", 
+            boxShadow:"0 10px 25px -5px rgba(245,158,11,0.5)",
+            opacity: loading ? 0.7 : 1
+          }}
+          onMouseEnter={e => { if(!loading) { e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 15px 30px -5px rgba(245,158,11,0.6)"; } }}
+          onMouseLeave={e => { if(!loading) { e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="0 10px 25px -5px rgba(245,158,11,0.5)"; } }}
         >
+          {!loading && <span className="absolute inset-0 pointer-events-none" style={{ background:"linear-gradient(105deg,rgba(255,255,255,0) 40%,rgba(255,255,255,0.2) 50%,rgba(255,255,255,0) 60%)", animation:"shimmerInquiry 3s ease-in-out infinite" }} />}
           {loading ? (
             <>
-              <div className="h-5 w-5 rounded-full border-2 border-white/30
-                              border-t-white animate-spin" />
-              Sending...
+              <div className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              SENDING...
             </>
           ) : (
             <>
-              <FiSend size={16} />
-              Send Inquiry
+              <FiSend size={16} className="relative z-10" />
+              <span className="relative z-10">SEND INQUIRY</span>
             </>
           )}
         </button>

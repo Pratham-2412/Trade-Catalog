@@ -17,13 +17,23 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const register = async (name, email, password) => {
+  const register = async (name, email, password, otp) => {
     const { data } = await API.post("/auth/register", {
-      name, email, password,
+      name, email, password, otp
     });
     setUser(data);
     localStorage.setItem("tradecatalog_user", JSON.stringify(data));
     API.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+    return data;
+  };
+
+  const sendOTP = async (email) => {
+    const { data } = await API.post("/auth/send-otp", { email });
+    return data;
+  };
+
+  const verifyOTP = async (email, otp) => {
+    const { data } = await API.post("/auth/verify-otp", { email, otp });
     return data;
   };
 
@@ -67,6 +77,7 @@ export const AuthProvider = ({ children }) => {
       user, loading,
       register, login, logout,
       forgotPassword, resetPassword,
+      sendOTP, verifyOTP,
       isAdmin, isManager, isUser, canEdit,
     }}>
       {children}

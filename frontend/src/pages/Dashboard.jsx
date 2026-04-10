@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   FiPackage, FiUsers, FiTag, FiUpload,
@@ -22,28 +22,32 @@ import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
 const COLORS = [
-  "#1a3c5e","#f59e0b","#3b82f6",
-  "#10b981","#ef4444","#8b5cf6","#06b6d4",
+  "#f59e0b", "#3b82f6", "#10b981", "#ef4444", "#8b5cf6", "#06b6d4"
 ];
+
+const PARTICLE_COUNT = 30;
 
 const StatCard = ({ icon: Icon, label, value, color, sub, to }) => {
   const content = (
-    <div className={`bg-white rounded-xl border border-gray-100
-                     shadow-sm p-6 hover:shadow-md transition-shadow
-                     ${to ? "cursor-pointer" : ""}`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-xl ${color}`}>
-          <Icon className="text-white text-xl" />
+    <div className="rounded-xl p-6 transition-all shadow-sm border relative overflow-hidden group"
+         style={{ background:"rgba(255,255,255,0.03)", borderColor:"rgba(255,255,255,0.08)", backdropFilter:"blur(15px)" }}
+         onMouseEnter={e => {e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.background="rgba(255,255,255,0.06)";}}
+         onMouseLeave={e => {e.currentTarget.style.transform="none"; e.currentTarget.style.background="rgba(255,255,255,0.03)";}}>
+      <div className="absolute top-0 right-0 w-24 h-24 rounded-full translate-x-8 -translate-y-8 opacity-10 transition-transform group-hover:scale-150"
+           style={{ background: color.includes("bg-") ? color.split("-")[1] : color }} />
+           
+      <div className="flex items-center justify-between mb-4 relative z-10">
+        <div className={`p-3 rounded-xl`} style={{ background:"rgba(255,255,255,0.05)", border:`1px solid rgba(255,255,255,0.1)` }}>
+          <Icon className="text-xl" style={{ color: color }} />
         </div>
-        <span className="text-xs text-gray-400 font-medium
-                         uppercase tracking-wide text-right">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-right" style={{ color:"rgba(255,255,255,0.4)" }}>
           {label}
         </span>
       </div>
-      <p className="font-display font-bold text-3xl text-gray-900">
+      <p className="font-bold text-3xl text-white relative z-10">
         {value}
       </p>
-      {sub && <p className="text-gray-400 text-sm mt-1">{sub}</p>}
+      {sub && <p className="text-xs font-medium mt-1 relative z-10" style={{ color:"rgba(255,255,255,0.4)" }}>{sub}</p>}
     </div>
   );
   return to ? <Link to={to}>{content}</Link> : content;
@@ -164,23 +168,28 @@ const RolePermissionTable = ({ roles, setRoles }) => {
   const isCore = (name) => ["admin", "manager", "user"].includes(name);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-8 mt-6">
+    <div className="rounded-xl shadow-sm p-6 mb-8 mt-6 border" style={{ background:"rgba(255,255,255,0.03)", borderColor:"rgba(255,255,255,0.08)", backdropFilter:"blur(15px)" }}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-2">
-          <FiShield className="text-indigo-500 text-xl" />
-          <h3 className="font-display font-semibold text-xl text-gray-900">
+          <FiShield className="text-xl" style={{ color:"#a855f7" }} />
+          <h3 className="font-bold text-xl text-white">
             Role & Permission Management
           </h3>
         </div>
         <button
           onClick={() => setShowCreate(!showCreate)}
-          className="flex items-center gap-1.5 bg-trade-navy text-white
-                     px-4 py-2 rounded-xl text-sm font-medium
-                     hover:bg-blue-800 transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold tracking-wider transition-colors border"
+          style={{
+            background: showCreate ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.1)",
+            borderColor: showCreate ? "rgba(239,68,68,0.3)" : "rgba(59,130,246,0.3)",
+            color: showCreate ? "#f87171" : "#60a5fa"
+          }}
+          onMouseEnter={e => e.currentTarget.style.background=showCreate?"rgba(239,68,68,0.2)":"rgba(59,130,246,0.2)"}
+          onMouseLeave={e => e.currentTarget.style.background=showCreate?"rgba(239,68,68,0.1)":"rgba(59,130,246,0.1)"}
         >
           <FiPlus size={14} />
-          {showCreate ? "Cancel" : "Add New Role"}
+          {showCreate ? "CANCEL" : "ADD NEW ROLE"}
         </button>
       </div>
 
@@ -188,26 +197,28 @@ const RolePermissionTable = ({ roles, setRoles }) => {
       {showCreate && (
         <form
           onSubmit={createRole}
-          className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-indigo-50
-                     rounded-xl border border-indigo-100"
+          className="flex flex-col sm:flex-row gap-3 mb-6 p-4 rounded-xl border"
+          style={{ background:"rgba(168,85,247,0.05)", borderColor:"rgba(168,85,247,0.2)" }}
         >
           <input
             name="roleName"
             placeholder="Role ID (e.g. staff)"
-            className="input-field flex-1"
+            className="dark-input flex-1"
             required
           />
           <input
             name="displayName"
             placeholder="Display Name (e.g. Sales Staff)"
-            className="input-field flex-1"
+            className="dark-input flex-1"
             required
           />
           <button
             type="submit"
-            className="btn-primary px-6 py-2.5 whitespace-nowrap"
+            className="px-6 py-2.5 rounded-xl font-bold tracking-wide transition-all relative overflow-hidden"
+            style={{ background:"linear-gradient(135deg,#a855f7,#7e22ce)", color:"#fff", boxShadow:"0 4px 15px rgba(168,85,247,0.3)" }}
           >
-            Create Role
+             <span className="absolute inset-0 pointer-events-none" style={{ background:"linear-gradient(105deg,rgba(255,255,255,0) 40%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0) 60%)", animation:"btnShimmer 3s ease-in-out infinite" }} />
+            CREATE ROLE
           </button>
         </form>
       )}
@@ -216,22 +227,22 @@ const RolePermissionTable = ({ roles, setRoles }) => {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">
+            <tr style={{ borderBottom:"1px solid rgba(255,255,255,0.1)" }}>
+              <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider whitespace-nowrap" style={{ color:"rgba(255,255,255,0.4)" }}>
                 Role
               </th>
-              <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider" style={{ color:"rgba(255,255,255,0.4)" }}>
                 Type
               </th>
-              <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider" style={{ color:"rgba(255,255,255,0.4)" }}>
                 Permissions
               </th>
-              <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider text-right whitespace-nowrap">
+              <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-right whitespace-nowrap" style={{ color:"rgba(255,255,255,0.4)" }}>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody>
             {roles.map((role) => {
               const isEditing = editingRoleId === role._id;
               const defaults = DEFAULT_PERMISSIONS[role.name] || [];
@@ -243,33 +254,36 @@ const RolePermissionTable = ({ roles, setRoles }) => {
               return (
                 <tr
                   key={role._id}
-                  className={`transition-colors ${
-                    isEditing
-                      ? "bg-indigo-50/40"
-                      : "hover:bg-gray-50/50"
-                  }`}
+                  className="transition-colors border-b"
+                  style={{
+                    backgroundColor: isEditing ? "rgba(168,85,247,0.05)" : "transparent",
+                    borderColor:"rgba(255,255,255,0.03)"
+                  }}
+                  onMouseEnter={e => {if(!isEditing) e.currentTarget.style.backgroundColor="rgba(255,255,255,0.02)"}}
+                  onMouseLeave={e => {if(!isEditing) e.currentTarget.style.backgroundColor="transparent"}}
                 >
                   {/* Role Name */}
                   <td className="px-4 py-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-white font-bold text-xs ${
-                          role.name === "admin"
-                            ? "bg-rose-500"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-white font-bold text-xs shadow-sm"
+                        style={{
+                          background: role.name === "admin"
+                            ? "linear-gradient(135deg, #ef4444, #b91c1c)"
                             : role.name === "manager"
-                              ? "bg-amber-500"
+                              ? "linear-gradient(135deg, #f59e0b, #b45309)"
                               : role.name === "user"
-                                ? "bg-blue-500"
-                                : "bg-indigo-500"
-                        }`}
+                                ? "linear-gradient(135deg, #3b82f6, #1d4ed8)"
+                                : "linear-gradient(135deg, #8b5cf6, #5b21b6)"
+                        }}
                       >
                         {role.displayName?.charAt(0)?.toUpperCase() || "R"}
                       </div>
                       <div>
-                        <p className="font-bold text-gray-900 text-sm">
+                        <p className="font-bold text-white text-sm tracking-wide">
                           {role.displayName}
                         </p>
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wider">
+                        <p className="text-[10px] uppercase font-bold tracking-wider mt-0.5" style={{ color:"rgba(255,255,255,0.4)" }}>
                           {role.name}
                         </p>
                       </div>
@@ -279,11 +293,12 @@ const RolePermissionTable = ({ roles, setRoles }) => {
                   {/* Type */}
                   <td className="px-4 py-4">
                     <span
-                      className={`badge text-[10px] font-bold uppercase tracking-wider ${
+                      className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border"
+                      style={
                         isCore(role.name)
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-purple-100 text-purple-700"
-                      }`}
+                          ? { background:"rgba(59,130,246,0.15)", color:"#60a5fa", borderColor:"rgba(59,130,246,0.3)" }
+                          : { background:"rgba(168,85,247,0.15)", color:"#c084fc", borderColor:"rgba(168,85,247,0.3)" }
+                      }
                     >
                       {isCore(role.name) ? "System" : "Custom"}
                     </span>
@@ -297,13 +312,12 @@ const RolePermissionTable = ({ roles, setRoles }) => {
                         return (
                           <span
                             key={perm}
-                            className={`inline-flex items-center gap-1 px-2 py-0.5
-                                        rounded-md text-[10px] font-semibold
-                                        transition-all ${
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all border ${isEditing ? "cursor-pointer hover:opacity-70" : ""}`}
+                            style={
                               isDefault
-                                ? "bg-green-100 text-green-700 border border-green-200"
-                                : "bg-amber-100 text-amber-700 border border-amber-200"
-                            } ${isEditing ? "cursor-pointer hover:opacity-70" : ""}`}
+                                ? { background:"rgba(16,185,129,0.1)", color:"#34d399", borderColor:"rgba(16,185,129,0.2)" }
+                                : { background:"rgba(245,158,11,0.1)", color:"#fbbf24", borderColor:"rgba(245,158,11,0.2)" }
+                            }
                             onClick={
                               isEditing ? () => togglePerm(perm) : undefined
                             }
@@ -317,7 +331,7 @@ const RolePermissionTable = ({ roles, setRoles }) => {
                           >
                             {perm.replace(/_/g, " ")}
                             {isEditing && (
-                              <FiX size={10} className="ml-0.5 text-red-400" />
+                              <FiX size={10} style={{ color:"#fca5a5", marginLeft:"4px" }} />
                             )}
                           </span>
                         );
@@ -328,15 +342,12 @@ const RolePermissionTable = ({ roles, setRoles }) => {
                         <select
                           value={addPerm}
                           onChange={(e) => handleAddPerm(e.target.value)}
-                          className="text-[10px] font-semibold px-2 py-0.5
-                                     rounded-md border border-dashed border-indigo-300
-                                     bg-indigo-50 text-indigo-600 cursor-pointer
-                                     focus:ring-1 focus:ring-indigo-400
-                                     focus:outline-none appearance-none"
+                          className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-dashed cursor-pointer outline-none appearance-none"
+                          style={{ background:"rgba(255,255,255,0.05)", color:"#e2e8f0", borderColor:"rgba(255,255,255,0.2)" }}
                         >
-                          <option value="">+ Add permission</option>
+                          <option value="" style={{ background:"#1e293b", color:"#e2e8f0" }}>+ ADD PERM</option>
                           {availableToAdd.map((p) => (
-                            <option key={p} value={p}>
+                            <option key={p} value={p} style={{ background:"#1e293b", color:"#e2e8f0" }}>
                               {p.replace(/_/g, " ")}
                             </option>
                           ))}
@@ -344,7 +355,7 @@ const RolePermissionTable = ({ roles, setRoles }) => {
                       )}
 
                       {permsToShow.length === 0 && (
-                        <span className="text-xs text-gray-300 italic">
+                        <span className="text-xs font-medium" style={{ color:"rgba(255,255,255,0.3)" }}>
                           No permissions
                         </span>
                       )}
@@ -359,18 +370,20 @@ const RolePermissionTable = ({ roles, setRoles }) => {
                           <button
                             onClick={() => savePermissions(role._id)}
                             disabled={saving}
-                            className="p-2 bg-green-100 text-green-700
-                                       rounded-lg hover:bg-green-200
-                                       transition-colors disabled:opacity-50"
+                            className="p-2 rounded-lg transition-colors border disabled:opacity-50"
+                            style={{ background:"rgba(16,185,129,0.1)", color:"#34d399", borderColor:"rgba(16,185,129,0.3)" }}
+                            onMouseEnter={e => {if(!saving) e.currentTarget.style.background="rgba(16,185,129,0.2)"}}
+                            onMouseLeave={e => {if(!saving) e.currentTarget.style.background="rgba(16,185,129,0.1)"}}
                             title="Save Permissions"
                           >
                             <FiSave size={14} />
                           </button>
                           <button
                             onClick={cancelEditing}
-                            className="p-2 bg-gray-100 text-gray-500
-                                       rounded-lg hover:bg-gray-200
-                                       transition-colors"
+                            className="p-2 rounded-lg transition-colors border"
+                            style={{ background:"rgba(255,255,255,0.05)", color:"#cbd5e1", borderColor:"rgba(255,255,255,0.1)" }}
+                            onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"}
+                            onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.05)"}
                             title="Cancel"
                           >
                             <FiX size={14} />
@@ -380,9 +393,10 @@ const RolePermissionTable = ({ roles, setRoles }) => {
                         <>
                           <button
                             onClick={() => startEditing(role)}
-                            className="p-2 text-gray-400 hover:text-trade-navy
-                                       hover:bg-gray-100 rounded-lg
-                                       transition-colors"
+                            className="p-2 rounded-lg transition-colors border"
+                            style={{ color:"#fbbf24", borderColor:"transparent" }}
+                            onMouseEnter={e => {e.currentTarget.style.background="rgba(245,158,11,0.1)"; e.currentTarget.style.borderColor="rgba(245,158,11,0.2)";}}
+                            onMouseLeave={e => {e.currentTarget.style.background="transparent"; e.currentTarget.style.borderColor="transparent";}}
                             title="Edit Permissions"
                           >
                             <FiEdit2 size={14} />
@@ -390,9 +404,10 @@ const RolePermissionTable = ({ roles, setRoles }) => {
                           {!isCore(role.name) && (
                             <button
                               onClick={() => deleteRole(role)}
-                              className="p-2 text-gray-400 hover:text-red-500
-                                         hover:bg-red-50 rounded-lg
-                                         transition-colors"
+                              className="p-2 rounded-lg transition-colors border"
+                              style={{ color:"#f87171", borderColor:"transparent" }}
+                              onMouseEnter={e => {e.currentTarget.style.background="rgba(239,68,68,0.1)"; e.currentTarget.style.borderColor="rgba(239,68,68,0.2)";}}
+                              onMouseLeave={e => {e.currentTarget.style.background="transparent"; e.currentTarget.style.borderColor="transparent";}}
                               title="Delete Role"
                             >
                               <FiTrash2 size={14} />
@@ -407,7 +422,7 @@ const RolePermissionTable = ({ roles, setRoles }) => {
             })}
             {roles.length === 0 && (
               <tr>
-                <td colSpan="4" className="py-8 text-center text-gray-300">
+                <td colSpan="4" className="py-8 text-center font-medium" style={{ color:"rgba(255,255,255,0.3)" }}>
                   No roles found
                 </td>
               </tr>
@@ -417,23 +432,23 @@ const RolePermissionTable = ({ roles, setRoles }) => {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-gray-100">
-        <span className="text-xs text-gray-400 font-medium">Legend:</span>
+      <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t" style={{ borderColor:"rgba(255,255,255,0.05)" }}>
+        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color:"rgba(255,255,255,0.4)" }}>Legend:</span>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-green-100 border border-green-200" />
-          <span className="text-xs text-gray-500">Default Permission</span>
+          <span className="w-3 h-3 rounded" style={{ background:"rgba(16,185,129,0.1)", border:"1px solid rgba(16,185,129,0.3)" }} />
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color:"rgba(255,255,255,0.5)" }}>Default Permission</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-amber-100 border border-amber-200" />
-          <span className="text-xs text-gray-500">Manually Added</span>
+          <span className="w-3 h-3 rounded" style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)" }} />
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color:"rgba(255,255,255,0.5)" }}>Manually Added</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="badge text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0">System</span>
-          <span className="text-xs text-gray-500">Core roles (cannot delete)</span>
+          <span className="px-1.5 rounded text-[9px] font-bold uppercase tracking-wider border" style={{ background:"rgba(59,130,246,0.15)", color:"#60a5fa", borderColor:"rgba(59,130,246,0.3)" }}>System</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color:"rgba(255,255,255,0.5)" }}>Core roles (cannot delete)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="badge text-[9px] bg-purple-100 text-purple-700 px-1.5 py-0">Custom</span>
-          <span className="text-xs text-gray-500">User-created roles</span>
+          <span className="px-1.5 rounded text-[9px] font-bold uppercase tracking-wider border" style={{ background:"rgba(168,85,247,0.15)", color:"#c084fc", borderColor:"rgba(168,85,247,0.3)" }}>Custom</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color:"rgba(255,255,255,0.5)" }}>User-created roles</span>
         </div>
       </div>
     </div>
@@ -577,473 +592,531 @@ const Dashboard = () => {
     }
   };
 
-  if (loading) return <Spinner text="Loading dashboard..." />;
+  if (loading) return (
+    <div className="flex items-center justify-center py-20 min-h-screen" style={{ background:"#0a1628" }}>
+      <div className="h-10 w-10 rounded-full border-4 border-emerald-200 border-t-trade-navy animate-spin" />
+    </div>
+  );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
+      <style>{`
+        @keyframes orbFloat {
+          0%,100% { transform: translateY(0) scale(1); }
+          50%      { transform: translateY(-30px) scale(1.05); }
+        }
+        @keyframes dotRise {
+          0%        { opacity:0; transform:translateY(0); }
+          20%       { opacity:0.6; }
+          80%       { opacity:0.3; }
+          100%      { opacity:0; transform:translateY(-80px); }
+        }
+        @keyframes cardIn {
+          from { opacity:0; transform:translateY(32px) scale(0.97); }
+          to   { opacity:1; transform:translateY(0)   scale(1); }
+        }
+        @keyframes btnShimmer {
+          0%,100% { transform:translateX(-100%); }
+          60%     { transform:translateX(100%); }
+        }
+        /* Custom scrollbar for dark tables */
+        .dark-table-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .dark-table-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 4px; }
+        .dark-table-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .dark-table-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+      `}</style>
+      
+      <div className="min-h-[calc(100vh-64px)] relative overflow-hidden" style={{ background: "#0a1628" }}>
+        
+        {/* Animated Orbs */}
+        <div className="absolute rounded-full pointer-events-none" style={{ width:500, height:500, background:"#3b82f6", filter:"blur(80px)", opacity:0.1, top:"-100px", left:"-100px", animation:"orbFloat 12s ease-in-out infinite" }} />
+        <div className="absolute rounded-full pointer-events-none" style={{ width:400, height:400, background:"#10b981", filter:"blur(80px)", opacity:0.06, bottom:"10%", right:"-100px", animation:"orbFloat 12s ease-in-out infinite", animationDelay:"4s" }} />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center
-                      justify-between gap-4 mb-8">
-        <div>
-          <h1 className="font-display font-bold text-3xl text-trade-navy">
-            Dashboard
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Welcome back,{" "}
-            <span className="font-medium text-trade-navy">
-              {user?.name}
-            </span> 👋
-          </p>
-        </div>
-        <div className="flex gap-3 flex-wrap">
-          <Link to="/add-product"
-            className="flex items-center gap-2 bg-trade-navy text-white
-                       px-4 py-2.5 rounded-xl text-sm font-medium
-                       hover:bg-blue-800 transition-colors">
-            <FiPlus size={16} />
-            Add Product
-          </Link>
-         <Link to="/users"
-  className="flex items-center gap-2 border border-gray-200
-             text-gray-600 px-4 py-2.5 rounded-xl text-sm
-             font-medium hover:border-trade-navy transition-colors">
-  <FiUsers size={16} />
-  Manage Users
-</Link>
+        {/* Grid Overlay */}
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px)", backgroundSize:"40px 40px" }} />
 
-  <a href="/api/products/export/csv"
-    className="flex items-center gap-2 bg-trade-gold text-white
-               px-4 py-2.5 rounded-xl text-sm font-medium
-               hover:bg-amber-600 transition-colors"
-  >
-    <FiDownload size={16} />
-    Export CSV
-  </a>
-        </div>
-      </div>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4
-                      gap-4 mb-8">
-        <StatCard icon={FiPackage}      label="Total Products"
-          value={stats.total}      color="bg-trade-navy"
-          sub={`${stats.manual} manual`} to="/" />
-        <StatCard icon={FiStar}         label="Featured"
-          value={stats.featured}   color="bg-trade-gold"
-          sub="Featured products" />
-        <StatCard icon={FiUsers}        label="Total Users"
-          value={stats.users}      color="bg-blue-500"
-          sub="Registered users"   to="/users" />
-        <StatCard icon={FiShoppingCart} label="Total Orders"
-          value={orderStats?.total || 0} color="bg-indigo-500"
-          sub={`${orderStats?.paid || 0} paid orders`} to="/admin/orders" />
-        <StatCard icon={FiCreditCard}   label="Total Revenue"
-          value={`₹${(orderStats?.revenue || 0).toLocaleString()}`}
-          color="bg-rose-500"      sub="Paid revenue" />
-        <StatCard icon={FiMessageSquare} label="Inquiries"
-          value={stats.inquiries}  color="bg-emerald-500"
-          sub="Total inquiries" />
-        <StatCard icon={FiTag}          label="Categories"
-          value={stats.categories} color="bg-purple-500"
-          sub="Product categories" />
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-        {/* Bar Chart */}
-        <div className="bg-white rounded-xl border border-gray-100
-                        shadow-sm p-6">
-          <h3 className="font-display font-semibold text-gray-900 mb-6">
-            Products by Category
-          </h3>
-          {categoryData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={categoryData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }}
-                  angle={-20} textAnchor="end" height={50} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip contentStyle={{
-                  borderRadius: "8px", fontSize: "13px",
-                }} />
-                <Bar dataKey="count" fill="#1a3c5e"
-                  radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-64 flex items-center justify-center
-                            text-gray-300">
-              No data yet
-            </div>
-          )}
-        </div>
-
-        {/* Pie Chart */}
-        <div className="bg-white rounded-xl border border-gray-100
-                        shadow-sm p-6">
-          <h3 className="font-display font-semibold text-gray-900 mb-6">
-            Currency Distribution
-          </h3>
-          {currencyData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={currencyData} cx="50%" cy="50%"
-                  outerRadius={90} dataKey="value"
-                  label={({ name, percent }) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`
-                  }
-                >
-                  {currencyData.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-64 flex items-center justify-center
-                            text-gray-300">
-              No data yet
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Orders Section */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-display font-semibold text-gray-900">
-            Recent Orders
-          </h3>
-          <Link to="/admin/orders"
-            className="text-sm text-trade-navy font-medium
-                       hover:text-trade-gold transition-colors">
-            View All Orders →
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="text-gray-400 font-bold uppercase tracking-wider border-b border-gray-50">
-                <th className="pb-3">Order</th>
-                <th className="pb-3">Customer</th>
-                <th className="pb-3">Product</th>
-                <th className="pb-3 text-right">Amount</th>
-                <th className="pb-3 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {recentOrders.map((order) => (
-                <tr key={order._id} className="hover:bg-gray-50/50">
-                  <td className="py-4 font-bold text-trade-navy">#{order.orderNumber}</td>
-                  <td className="py-4">
-                    <p className="font-medium text-gray-900">{order.user?.name}</p>
-                    <p className="text-xs text-gray-400">{order.user?.email}</p>
-                  </td>
-                  <td className="py-4 max-w-[200px] truncate">
-                    {order.items[0]?.productName}
-                  </td>
-                  <td className="py-4 text-right font-bold text-gray-900">
-                    ₹{order.totalAmount.toLocaleString()}
-                  </td>
-                  <td className="py-4 text-right">
-                    <span className={`badge text-[10px] px-2 py-0.5 ${
-                      order.paymentStatus === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
-                    }`}>
-                      {order.paymentStatus.toUpperCase()}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {recentOrders.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="py-8 text-center text-gray-300">No orders yet</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-
-
-      {/* New Charts Row — Stock Status + Price Range */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-        {/* Stock Status Donut */}
-        <div className="bg-white rounded-xl border border-gray-100
-                        shadow-sm p-6">
-          <h3 className="font-display font-semibold text-gray-900 mb-6">
-            Stock Status Overview
-          </h3>
-          {stockData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={stockData}
-                  cx="50%" cy="50%"
-                  innerRadius={55} outerRadius={95}
-                  paddingAngle={4}
-                  dataKey="value"
-                  label={({ name, percent }) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`
-                  }
-                >
-                  {stockData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ borderRadius: "10px", fontSize: "13px" }}
-                  formatter={(value) => [`${value} products`]}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-64 flex items-center justify-center
-                            text-gray-300">
-              No data yet
-            </div>
-          )}
-        </div>
-
-        {/* Price Range Distribution */}
-        <div className="bg-white rounded-xl border border-gray-100
-                        shadow-sm p-6">
-          <h3 className="font-display font-semibold text-gray-900 mb-6">
-            Price Range Distribution
-          </h3>
-          {priceRangeData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={priceRangeData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis type="number" tick={{ fontSize: 12 }}
-                  allowDecimals={false} />
-                <YAxis type="category" dataKey="range"
-                  tick={{ fontSize: 11 }} width={90} />
-                <Tooltip
-                  contentStyle={{ borderRadius: "10px", fontSize: "13px" }}
-                  formatter={(value) => [`${value} products`, "Count"]}
-                />
-                <Bar dataKey="count" radius={[0, 6, 6, 0]}>
-                  {priceRangeData.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-64 flex items-center justify-center
-                            text-gray-300">
-              No data yet
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Products + Inquiries */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-        {/* Recent Products */}
-        <div className="bg-white rounded-xl border border-gray-100
-                        shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold text-gray-900">
-              Recent Products
-            </h3>
-            <Link to="/"
-              className="text-sm text-trade-navy font-medium
-                         hover:text-trade-gold transition-colors">
-              View All →
-            </Link>
-          </div>
-          <div className="space-y-3">
-            {products.map((p) => (
-              <Link
-                key={p._id}
-                to={`/products/${p._id}`}
-                className="flex items-center gap-3 p-2 rounded-xl
-                           hover:bg-gray-50 transition-colors"
-              >
-                <div className="w-12 h-12 rounded-lg overflow-hidden
-                                flex-shrink-0 bg-gray-100">
-                  {p.imageUrl ? (
-                    <img src={p.imageUrl} alt={p.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "https://placehold.co/48x48";
-                      }} />
-                  ) : (
-                    <div className="w-full h-full flex items-center
-                                    justify-center">
-                      <FiPackage className="text-gray-300" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 text-sm
-                                truncate">
-                    {p.name}
-                    {p.isFeatured && (
-                      <FiStar className="inline ml-1 text-trade-gold
-                                         text-xs" />
-                    )}
-                  </p>
-                  <p className="text-xs text-gray-400">{p.category}</p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-bold text-trade-navy">
-                    {p.price} {p.currency}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {p.views} views
-                  </p>
-                </div>
-              </Link>
-            ))}
-            {products.length === 0 && (
-              <p className="text-center text-gray-300 py-6 text-sm">
-                No products yet
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Recent Inquiries */}
-        <div className="bg-white rounded-xl border border-gray-100
-                        shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold text-gray-900">
-              Recent Inquiries
-            </h3>
-            <span className="badge bg-trade-gold/10 text-amber-700">
-              {stats.inquiries} total
-            </span>
-          </div>
-          <div className="space-y-3">
-            {inquiries.map((inq) => (
-              <div key={inq._id}
-                className="p-3 rounded-xl border border-gray-100
-                           hover:border-gray-200 transition-colors">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">
-                      {inq.name}
-                    </p>
-                    <p className="text-xs text-gray-400">{inq.email}</p>
-                  </div>
-                  <span className={`badge text-xs ${
-                    inq.status === "new"
-                      ? "bg-blue-100 text-blue-600"
-                      : inq.status === "read"
-                        ? "bg-gray-100 text-gray-600"
-                        : inq.status === "replied"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-red-100 text-red-600"
-                  }`}>
-                    {inq.status}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500 truncate mb-2">
-                  📦 {inq.productName}
-                </p>
-                <p className="text-xs text-gray-400 line-clamp-1">
-                  {inq.message}
-                </p>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="flex items-center gap-1 text-xs
-                                   text-gray-400">
-                    <FiClock size={10} />
-                    {new Date(inq.createdAt).toLocaleDateString()}
-                  </span>
-                  <div className="flex gap-1 ml-auto">
-                    {inq.status === "new" && (
-                      <button
-                        onClick={() =>
-                          handleInquiryStatus(inq._id, "read")
-                        }
-                        className="p-1 bg-blue-50 text-blue-600
-                                   rounded-lg hover:bg-blue-100
-                                   transition-colors"
-                        title="Mark as Read"
-                      >
-                        <FiCheck size={12} />
-                      </button>
-                    )}
-                    {inq.status === "read" && (
-                      <button
-                        onClick={() =>
-                          handleInquiryStatus(inq._id, "replied")
-                        }
-                        className="p-1 bg-green-50 text-green-600
-                                   rounded-lg hover:bg-green-100
-                                   transition-colors"
-                        title="Mark as Replied"
-                      >
-                        <FiCheck size={12} />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDeleteInquiry(inq._id)}
-                      className="p-1 bg-red-50 text-red-500 rounded-lg
-                                 hover:bg-red-100 transition-colors"
-                      title="Delete"
-                    >
-                      <FiX size={12} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {inquiries.length === 0 && (
-              <p className="text-center text-gray-300 py-6 text-sm">
-                No inquiries yet
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Categories Overview */}
-      <div className="bg-white rounded-xl border border-gray-100
-                      shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-semibold text-gray-900">
-            Categories Overview
-          </h3>
-          <Link to="/categories"
-            className="text-sm text-trade-navy font-medium
-                       hover:text-trade-gold transition-colors">
-            Manage →
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3
-                        lg:grid-cols-5 gap-3">
-          {categories.slice(0, 10).map((cat) => (
-            <div key={cat._id}
-              className="text-center p-3 rounded-xl bg-gray-50
-                         hover:bg-trade-light transition-colors">
-              <p className="text-2xl mb-1">{cat.icon}</p>
-              <p className="text-xs font-medium text-gray-700
-                            truncate">
-                {cat.name}
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {cat.productCount} products
-              </p>
-            </div>
+        {/* Particles */}
+        <div className="absolute inset-0 pointer-events-none">
+          {Array.from({ length: 30 }).map((_, i) => (
+            <div key={i} style={{
+              position:"absolute", width:"4px", height:"4px", borderRadius:"50%", background:"#3b82f6", opacity:0,
+              left:`${Math.random()*100}%`, bottom:`${Math.random()*50}%`,
+              animation:`dotRise ${5+Math.random()*5}s ease-in-out infinite`, animationDelay:`${Math.random()*8}s`
+            }} />
           ))}
         </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10" style={{ animation:"cardIn 0.5s both" }}>
+
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+            <div>
+              <h1 className="font-bold text-3xl text-white tracking-tight" style={{ fontFamily:"Poppins,sans-serif" }}>
+                Dashboard
+              </h1>
+              <p className="mt-1 font-medium" style={{ color:"rgba(255,255,255,0.5)" }}>
+                Welcome back,{" "}
+                <span className="font-bold tracking-wide" style={{ color:"#60a5fa" }}>
+                  {user?.name}
+                </span> 👋
+              </p>
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              <Link to="/add-product"
+                className="flex items-center gap-2 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all relative overflow-hidden"
+                style={{ background:"linear-gradient(135deg,#3b82f6,#1e40af)", boxShadow:"0 4px 15px rgba(59,130,246,0.3)" }}>
+                <span className="absolute inset-0 pointer-events-none" style={{ background:"linear-gradient(105deg,rgba(255,255,255,0) 40%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0) 60%)", animation:"btnShimmer 3s ease-in-out infinite" }} />
+                <FiPlus size={16} />
+                ADD PRODUCT
+              </Link>
+             <Link to="/users"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold tracking-wider transition-colors border"
+                style={{ background:"rgba(255,255,255,0.05)", borderColor:"rgba(255,255,255,0.1)", color:"#fff" }}
+                onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"}
+                onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.05)"}>
+                <FiUsers size={16} />
+                MANAGE USERS
+             </Link>
+
+              <a href="/api/products/export/csv"
+                className="flex items-center gap-2 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all border"
+                style={{ background:"linear-gradient(135deg,#f59e0b,#b45309)", borderColor:"rgba(245,158,11,0.5)", boxShadow:"0 4px 15px rgba(245,158,11,0.3)" }}
+                onMouseEnter={e => e.currentTarget.style.transform="scale(1.02)"}
+                onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}
+              >
+                <FiDownload size={16} />
+                EXPORT CSV
+              </a>
+            </div>
+          </div>
+
+          {/* Stat Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+            <StatCard icon={FiPackage}      label="Total Products"
+              value={stats.total}      color="#3b82f6"
+              sub={`${stats.manual} manual`} to="/" />
+            <StatCard icon={FiStar}         label="Featured"
+              value={stats.featured}   color="#f59e0b"
+              sub="Featured products" />
+            <StatCard icon={FiUsers}        label="Total Users"
+              value={stats.users}      color="#10b981"
+              sub="Registered users"   to="/users" />
+            <StatCard icon={FiShoppingCart} label="Total Orders"
+              value={orderStats?.total || 0} color="#8b5cf6"
+              sub={`${orderStats?.paid || 0} paid`} to="/admin/orders" />
+            <StatCard icon={FiCreditCard}   label="Total Revenue"
+              value={`₹${(orderStats?.revenue || 0).toLocaleString()}`}
+              color="#ef4444"      sub="Paid revenue" />
+            <StatCard icon={FiMessageSquare} label="Inquiries"
+              value={stats.inquiries}  color="#aebc45"
+              sub="Total inquiries" />
+            <StatCard icon={FiTag}          label="Categories"
+              value={stats.categories} color="#ec4899"
+              sub="Product categories" />
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+            {/* Bar Chart */}
+            <div className="rounded-xl shadow-sm p-6 border" style={{ background:"rgba(255,255,255,0.03)", borderColor:"rgba(255,255,255,0.08)", backdropFilter:"blur(15px)" }}>
+              <h3 className="font-bold text-white mb-6 uppercase tracking-wider">
+                Products by Category
+              </h3>
+              {categoryData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={categoryData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill:"rgba(255,255,255,0.5)" }}
+                      angle={-20} textAnchor="end" height={50} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 12, fill:"rgba(255,255,255,0.5)" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{
+                      background: "rgba(10,22,40,0.9)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff",
+                      borderRadius: "8px", fontSize: "13px",
+                    }} />
+                    <Bar dataKey="count" fill="url(#colorProducts)" radius={[4, 4, 0, 0]} />
+                    <defs>
+                      <linearGradient id="colorProducts" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                      </linearGradient>
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-64 flex items-center justify-center font-bold tracking-wider uppercase text-sm" style={{ color:"rgba(255,255,255,0.3)" }}>
+                  No data yet
+                </div>
+              )}
+            </div>
+
+            {/* Pie Chart */}
+            <div className="rounded-xl shadow-sm p-6 border" style={{ background:"rgba(255,255,255,0.03)", borderColor:"rgba(255,255,255,0.08)", backdropFilter:"blur(15px)" }}>
+              <h3 className="font-bold text-white mb-6 uppercase tracking-wider">
+                Currency Distribution
+              </h3>
+              {currencyData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie data={currencyData} cx="50%" cy="50%"
+                      outerRadius={90} innerRadius={60} paddingAngle={4} dataKey="value"
+                      label={({ name, percent }) =>
+                        `${name} ${(percent * 100).toFixed(0)}%`
+                      }
+                      labelLine={{ stroke:"rgba(255,255,255,0.2)" }}
+                    >
+                      {currencyData.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{
+                      background: "rgba(10,22,40,0.9)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff",
+                      borderRadius: "8px", fontSize: "13px",
+                    }} />
+                    <Legend wrapperStyle={{ color:"rgba(255,255,255,0.7)", fontSize:"12px", paddingTop:"10px" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-64 flex items-center justify-center font-bold tracking-wider uppercase text-sm" style={{ color:"rgba(255,255,255,0.3)" }}>
+                  No data yet
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Orders Section */}
+          <div className="rounded-xl shadow-sm p-6 mb-8 border" style={{ background:"rgba(255,255,255,0.03)", borderColor:"rgba(255,255,255,0.08)", backdropFilter:"blur(15px)" }}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-bold text-white uppercase tracking-wider text-lg">
+                Recent Orders
+              </h3>
+              <Link to="/admin/orders"
+                className="text-sm font-bold tracking-wider hover:underline transition-colors uppercase"
+                style={{ color:"#60a5fa" }}>
+                View All →
+              </Link>
+            </div>
+            <div className="overflow-x-auto dark-table-scrollbar">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="uppercase tracking-wider font-bold" style={{ color:"rgba(255,255,255,0.4)", borderBottom:"1px solid rgba(255,255,255,0.1)" }}>
+                    <th className="pb-3 px-2">Order</th>
+                    <th className="pb-3 px-2">Customer</th>
+                    <th className="pb-3 px-2">Product</th>
+                    <th className="pb-3 px-2 text-right">Amount</th>
+                    <th className="pb-3 px-2 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentOrders.map((order) => (
+                    <tr key={order._id} className="transition-colors border-b" style={{ borderColor:"rgba(255,255,255,0.03)" }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor="rgba(255,255,255,0.02)"}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor="transparent"}>
+                      <td className="py-4 px-2 font-bold tracking-wide" style={{ color:"#93c5fd" }}>#{order.orderNumber}</td>
+                      <td className="py-4 px-2">
+                        <p className="font-bold tracking-wide text-white">{order.user?.name}</p>
+                        <p className="text-xs font-medium mt-0.5" style={{ color:"rgba(255,255,255,0.5)" }}>{order.user?.email}</p>
+                      </td>
+                      <td className="py-4 px-2 max-w-[200px] truncate font-medium" style={{ color:"rgba(255,255,255,0.8)" }}>
+                        {order.items[0]?.productName}
+                      </td>
+                      <td className="py-4 px-2 text-right font-bold tracking-wide" style={{ color:"#34d399" }}>
+                        ₹{order.totalAmount.toLocaleString()}
+                      </td>
+                      <td className="py-4 px-2 text-right">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border"
+                              style={
+                                order.paymentStatus === "paid"
+                                  ? { background:"rgba(16,185,129,0.1)", color:"#34d399", borderColor:"rgba(16,185,129,0.3)" }
+                                  : { background:"rgba(245,158,11,0.1)", color:"#fbbf24", borderColor:"rgba(245,158,11,0.3)" }
+                              }>
+                          {order.paymentStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {recentOrders.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="py-8 text-center font-bold uppercase tracking-wider text-xs" style={{ color:"rgba(255,255,255,0.3)" }}>No orders yet</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* New Charts Row — Stock Status + Price Range */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+            {/* Stock Status Donut */}
+            <div className="rounded-xl shadow-sm p-6 border" style={{ background:"rgba(255,255,255,0.03)", borderColor:"rgba(255,255,255,0.08)", backdropFilter:"blur(15px)" }}>
+              <h3 className="font-bold text-white mb-6 uppercase tracking-wider">
+                Stock Status Overview
+              </h3>
+              {stockData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={stockData}
+                      cx="50%" cy="50%"
+                      innerRadius={55} outerRadius={95}
+                      paddingAngle={4}
+                      dataKey="value"
+                      label={({ name, percent }) =>
+                        `${name} ${(percent * 100).toFixed(0)}%`
+                      }
+                      labelLine={{ stroke:"rgba(255,255,255,0.2)" }}
+                    >
+                      {stockData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ background: "rgba(10,22,40,0.9)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff", borderRadius: "10px", fontSize: "13px" }}
+                      formatter={(value) => [`${value} products`]}
+                    />
+                    <Legend wrapperStyle={{ color:"rgba(255,255,255,0.7)", fontSize:"12px" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-64 flex items-center justify-center font-bold uppercase tracking-wider text-sm" style={{ color:"rgba(255,255,255,0.3)" }}>
+                  No data yet
+                </div>
+              )}
+            </div>
+
+            {/* Price Range Distribution */}
+            <div className="rounded-xl shadow-sm p-6 border" style={{ background:"rgba(255,255,255,0.03)", borderColor:"rgba(255,255,255,0.08)", backdropFilter:"blur(15px)" }}>
+              <h3 className="font-bold text-white mb-6 uppercase tracking-wider">
+                Price Range Distribution
+              </h3>
+              {priceRangeData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={priceRangeData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis type="number" tick={{ fontSize: 12, fill:"rgba(255,255,255,0.5)" }}
+                      allowDecimals={false} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="range"
+                      tick={{ fontSize: 11, fill:"rgba(255,255,255,0.7)" }} width={90} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{ background: "rgba(10,22,40,0.9)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff", borderRadius: "10px", fontSize: "13px" }}
+                      formatter={(value) => [`${value} products`, "Count"]}
+                    />
+                    <Bar dataKey="count" radius={[0, 6, 6, 0]}>
+                      {priceRangeData.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-64 flex items-center justify-center font-bold tracking-wider text-sm uppercase" style={{ color:"rgba(255,255,255,0.3)" }}>
+                  No data yet
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Products + Inquiries */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+            {/* Recent Products */}
+            <div className="rounded-xl shadow-sm p-6 border" style={{ background:"rgba(255,255,255,0.03)", borderColor:"rgba(255,255,255,0.08)", backdropFilter:"blur(15px)" }}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-white uppercase tracking-wider text-lg">
+                  Recent Products
+                </h3>
+                <Link to="/"
+                  className="text-sm font-bold tracking-wider hover:underline transition-colors uppercase"
+                  style={{ color:"#60a5fa" }}>
+                  View All →
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {products.map((p) => (
+                  <Link
+                    key={p._id}
+                    to={`/products/${p._id}`}
+                    className="flex items-center gap-3 p-3 rounded-xl transition-colors border"
+                    style={{ background:"rgba(255,255,255,0.02)", borderColor:"rgba(255,255,255,0.05)" }}
+                    onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.05)"}
+                    onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
+                  >
+                    <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0" style={{ background:"rgba(255,255,255,0.05)" }}>
+                      {p.imageUrl ? (
+                        <img src={p.imageUrl} alt={p.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "https://placehold.co/48x48/1e293b/475569?text=No+Img";
+                          }} />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <FiPackage className="text-xl" style={{ color:"rgba(255,255,255,0.3)" }} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-white text-sm truncate tracking-wide">
+                        {p.name}
+                        {p.isFeatured && (
+                          <FiStar className="inline ml-1 text-xs" style={{ color:"#f59e0b" }} />
+                        )}
+                      </p>
+                      <p className="text-[10px] uppercase font-bold tracking-wider mt-0.5" style={{ color:"rgba(255,255,255,0.4)" }}>{p.category}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-bold tracking-wide" style={{ color:"#34d399" }}>
+                        {p.price} {p.currency}
+                      </p>
+                      <p className="text-[10px] uppercase font-bold tracking-wider mt-0.5" style={{ color:"rgba(255,255,255,0.4)" }}>
+                        {p.views} views
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+                {products.length === 0 && (
+                  <p className="text-center py-6 text-xs font-bold uppercase tracking-wider" style={{ color:"rgba(255,255,255,0.3)" }}>
+                    No products yet
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Recent Inquiries */}
+            <div className="rounded-xl shadow-sm p-6 border" style={{ background:"rgba(255,255,255,0.03)", borderColor:"rgba(255,255,255,0.08)", backdropFilter:"blur(15px)" }}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-white uppercase tracking-wider text-lg">
+                  Recent Inquiries
+                </h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border"
+                      style={{ background:"rgba(245,158,11,0.1)", color:"#fbbf24", borderColor:"rgba(245,158,11,0.3)" }}>
+                  {stats.inquiries} total
+                </span>
+              </div>
+              <div className="space-y-3">
+                {inquiries.map((inq) => (
+                  <div key={inq._id}
+                    className="p-4 rounded-xl transition-colors border"
+                    style={{ background:"rgba(255,255,255,0.02)", borderColor:"rgba(255,255,255,0.05)" }}
+                    onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.04)"}
+                    onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div>
+                        <p className="font-bold text-white text-sm tracking-wide">
+                          {inq.name}
+                        </p>
+                        <p className="text-[10px] font-bold tracking-wider mt-0.5" style={{ color:"rgba(255,255,255,0.4)" }}>{inq.email}</p>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border"
+                            style={
+                              inq.status === "new"
+                                ? { background:"rgba(59,130,246,0.15)", color:"#60a5fa", borderColor:"rgba(59,130,246,0.3)" }
+                                : inq.status === "read"
+                                  ? { background:"rgba(255,255,255,0.1)", color:"#cbd5e1", borderColor:"rgba(255,255,255,0.2)" }
+                                  : inq.status === "replied"
+                                    ? { background:"rgba(16,185,129,0.1)", color:"#34d399", borderColor:"rgba(16,185,129,0.3)" }
+                                    : { background:"rgba(239,68,68,0.15)", color:"#f87171", borderColor:"rgba(239,68,68,0.3)" }
+                            }>
+                        {inq.status}
+                      </span>
+                    </div>
+                    <p className="text-[11px] uppercase font-bold tracking-wider truncate mb-2" style={{ color:"#fbbf24" }}>
+                      📦 {inq.productName}
+                    </p>
+                    <p className="text-xs font-medium line-clamp-1" style={{ color:"rgba(255,255,255,0.6)" }}>
+                      {inq.message}
+                    </p>
+                    <div className="flex items-center gap-2 mt-4 pt-3 border-t" style={{ borderColor:"rgba(255,255,255,0.05)" }}>
+                      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider" style={{ color:"rgba(255,255,255,0.4)" }}>
+                        <FiClock size={10} />
+                        {new Date(inq.createdAt).toLocaleDateString()}
+                      </span>
+                      <div className="flex gap-1 ml-auto">
+                        {inq.status === "new" && (
+                          <button
+                            onClick={() => handleInquiryStatus(inq._id, "read")}
+                            className="p-1.5 rounded-lg transition-colors border"
+                            style={{ background:"rgba(59,130,246,0.1)", color:"#60a5fa", borderColor:"rgba(59,130,246,0.2)" }}
+                            onMouseEnter={e => e.currentTarget.style.background="rgba(59,130,246,0.2)"}
+                            onMouseLeave={e => e.currentTarget.style.background="rgba(59,130,246,0.1)"}
+                            title="Mark as Read"
+                          >
+                            <FiCheck size={12} />
+                          </button>
+                        )}
+                        {inq.status === "read" && (
+                          <button
+                            onClick={() => handleInquiryStatus(inq._id, "replied")}
+                            className="p-1.5 rounded-lg transition-colors border"
+                            style={{ background:"rgba(16,185,129,0.1)", color:"#34d399", borderColor:"rgba(16,185,129,0.2)" }}
+                            onMouseEnter={e => e.currentTarget.style.background="rgba(16,185,129,0.2)"}
+                            onMouseLeave={e => e.currentTarget.style.background="rgba(16,185,129,0.1)"}
+                            title="Mark as Replied"
+                          >
+                            <FiCheck size={12} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteInquiry(inq._id)}
+                          className="p-1.5 rounded-lg transition-colors border"
+                          style={{ background:"rgba(239,68,68,0.1)", color:"#f87171", borderColor:"rgba(239,68,68,0.2)" }}
+                          onMouseEnter={e => e.currentTarget.style.background="rgba(239,68,68,0.2)"}
+                          onMouseLeave={e => e.currentTarget.style.background="rgba(239,68,68,0.1)"}
+                          title="Delete"
+                        >
+                          <FiX size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {inquiries.length === 0 && (
+                  <p className="text-center py-6 text-xs font-bold uppercase tracking-wider" style={{ color:"rgba(255,255,255,0.3)" }}>
+                    No inquiries yet
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Categories Overview */}
+          <div className="rounded-xl shadow-sm p-6 border" style={{ background:"rgba(255,255,255,0.03)", borderColor:"rgba(255,255,255,0.08)", backdropFilter:"blur(15px)" }}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-bold text-white uppercase tracking-wider text-lg">
+                Categories Overview
+              </h3>
+              <Link to="/categories"
+                className="text-sm font-bold tracking-wider hover:underline transition-colors uppercase"
+                style={{ color:"#60a5fa" }}>
+                Manage →
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {categories.slice(0, 10).map((cat) => (
+                <div key={cat._id}
+                  className="text-center p-4 rounded-xl transition-all border"
+                  style={{ background:"rgba(255,255,255,0.02)", borderColor:"rgba(255,255,255,0.05)" }}
+                  onMouseEnter={e => {e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.background="rgba(255,255,255,0.05)";}}
+                  onMouseLeave={e => {e.currentTarget.style.transform="none"; e.currentTarget.style.background="rgba(255,255,255,0.02)";}}>
+                  <p className="text-3xl mb-2 drop-shadow-md">{cat.icon}</p>
+                  <p className="text-xs font-bold text-white tracking-wide truncate">
+                    {cat.name}
+                  </p>
+                  <p className="text-[10px] uppercase font-bold tracking-wider mt-1" style={{ color:"rgba(255,255,255,0.4)" }}>
+                    {cat.productCount} products
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* ── Role & Permission Management ── */}
+          <RolePermissionTable roles={roles} setRoles={setRoles} />
+          
+        </div>
       </div>
-      {/* ── Role & Permission Management ── */}
-      <RolePermissionTable roles={roles} setRoles={setRoles} />
-      
-    </div>
+    </>
   );
 };
 
