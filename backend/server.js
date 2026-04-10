@@ -19,6 +19,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ✅ API Routes (Original Structure)
+app.get("/api/ping", (req, res) => res.json({ message: "API is online! 🚀" }));
 app.use("/api/auth",       require("./routes/authRoutes"));
 app.use("/api/products",   require("./routes/productRoutes"));
 app.use("/api/categories", require("./routes/categoryRoutes"));

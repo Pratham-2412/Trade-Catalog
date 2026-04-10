@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const register = async (name, email, password, otp) => {
-    const { data } = await API.post("/auth/register", {
+    const { data } = await API.post("auth/register", {
       name, email, password, otp
     });
     setUser(data);
@@ -28,18 +28,18 @@ export const AuthProvider = ({ children }) => {
   };
 
   const sendOTP = async (email) => {
-    const { data } = await API.post("/auth/send-otp", { email });
+    const { data } = await API.post("auth/send-otp", { email });
     return data;
   };
 
   const verifyOTP = async (email, otp) => {
-    const { data } = await API.post("/auth/verify-otp", { email, otp });
+    const { data } = await API.post("auth/verify-otp", { email, otp });
     return data;
   };
 
   const login = async (email, password) => {
     try {
-      const { data } = await API.post("/auth/login", { email, password });
+      const { data } = await API.post("auth/login", { email, password });
       setUser(data);
       localStorage.setItem("tradecatalog_user", JSON.stringify(data));
       API.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
@@ -50,12 +50,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const forgotPassword = async (email) => {
-    const { data } = await API.post("/auth/forgot-password", { email });
+    const { data } = await API.post("auth/forgot-password", { email });
     return data;
   };
 
   const resetPassword = async (token, password) => {
-    const { data } = await API.post(`/auth/reset-password/${token}`, {
+    const { data } = await API.post(`auth/reset-password/${token}`, {
       password,
     });
     return data;
