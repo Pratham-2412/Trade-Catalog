@@ -5,7 +5,9 @@ import {
   FiMapPin, FiClock, FiHome, FiList,
 } from "react-icons/fi";
 import { getOrderById } from "../api/orders";
+import API from "../api/axios";
 import Spinner from "../components/Spinner";
+import toast from "react-hot-toast";
 
 const OrderSuccess = () => {
   const { orderId }          = useParams();
@@ -18,6 +20,26 @@ const OrderSuccess = () => {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [orderId]);
+
+  const downloadInvoice = async () => {
+    try {
+      const response = await API.get(`/orders/${orderId}/invoice`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Invoice_${order?.orderNumber || orderId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Invoice downloaded!");
+    } catch (error) {
+      toast.error(error.message || "Failed to download invoice");
+    }
+  };
 
   if (loading) return <Spinner text="Loading order..." />;
 
@@ -199,17 +221,15 @@ const OrderSuccess = () => {
 
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <a
-          href={`/api/orders/${orderId}/invoice`}
-          target="_blank"
-          rel="noreferrer"
+        <button
+          onClick={downloadInvoice}
           className="flex-1 flex items-center justify-center gap-2
                      bg-trade-navy text-white py-3 rounded-xl
                      font-medium hover:bg-blue-800 transition-colors"
         >
           <FiDownload size={16} />
           Download Invoice
-        </a>
+        </button>
         <Link
           to="/my-orders"
           className="flex-1 flex items-center justify-center gap-2

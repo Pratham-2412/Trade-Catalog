@@ -67,8 +67,24 @@ const AdminOrders = () => {
     }
   };
 
-  const downloadInvoice = (orderId) => {
-    window.open(`${import.meta.env.VITE_API_URL}/api/orders/${orderId}/invoice`, "_blank");
+  const downloadInvoice = async (orderId, orderNumber) => {
+    try {
+      const response = await API.get(`/orders/${orderId}/invoice`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Invoice_${orderNumber || orderId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Invoice downloaded!");
+    } catch (error) {
+      toast.error(error.message || "Failed to download invoice");
+    }
   };
 
   if (loading && page === 1) return <Spinner text="Loading orders..." />;
@@ -225,7 +241,7 @@ const AdminOrders = () => {
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                        <button
-                        onClick={() => downloadInvoice(order._id)}
+                        onClick={() => downloadInvoice(order._id, order.orderNumber)}
                         className="p-2 text-gray-400 hover:text-trade-gold transition-colors"
                         title="Download Invoice"
                       >

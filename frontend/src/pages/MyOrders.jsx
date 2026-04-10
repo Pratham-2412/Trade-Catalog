@@ -6,7 +6,9 @@ import {
   FiTruck,
 } from "react-icons/fi";
 import { getMyOrders } from "../api/orders";
+import API from "../api/axios";
 import Spinner from "../components/Spinner";
+import toast from "react-hot-toast";
 
 const StatusBadge = ({ status }) => {
   const styles = {
@@ -69,6 +71,26 @@ const MyOrders = () => {
     };
     load();
   }, [page]);
+
+  const downloadInvoice = async (orderId, orderNumber) => {
+    try {
+      const response = await API.get(`/orders/${orderId}/invoice`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Invoice_${orderNumber || orderId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Invoice downloaded!");
+    } catch (error) {
+      toast.error(error.message || "Failed to download invoice");
+    }
+  };
 
   if (loading) return <Spinner text="Loading orders..." />;
 
@@ -200,7 +222,7 @@ const MyOrders = () => {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => window.open(`${import.meta.env.VITE_API_URL}/api/orders/${order._id}/invoice`, "_blank")}
+                    onClick={() => downloadInvoice(order._id, order.orderNumber)}
                     className="flex items-center gap-1.5 px-3 py-2
                                bg-trade-navy text-white text-xs
                                rounded-lg hover:bg-blue-800

@@ -6,7 +6,21 @@ const API = axios.create({
 });
 
 API.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    // Always attach token from localStorage if available
+    const stored = localStorage.getItem("tradecatalog_user");
+    if (stored) {
+      try {
+        const { token } = JSON.parse(stored);
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (e) {
+        // ignore parse errors
+      }
+    }
+    return config;
+  },
   (error) => Promise.reject(error)
 );
 
