@@ -11,6 +11,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, LineChart, Line,
   PieChart, Pie, Cell, Legend,
+  AreaChart, Area,
 } from "recharts";
 import API from "../api/axios";
 import {
@@ -455,6 +456,8 @@ const Dashboard = () => {
   const [categoryData,  setCategoryData]  = useState([]);
   const [currencyData,  setCurrencyData]  = useState([]);
   const [timelineData,  setTimelineData]  = useState([]);
+  const [stockData,     setStockData]     = useState([]);
+  const [priceRangeData, setPriceRangeData] = useState([]);
 
   useEffect(() => {
     const load = async () => {
@@ -514,12 +517,63 @@ const Dashboard = () => {
         });
         setCurrencyData(Object.entries(curMap).map(([name, value]) => ({ name, value })));
 
+        // ── Timeline: sorted chronologically with gap-filling ──
         const monthMap = {};
+        const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
         prods.forEach((p) => {
-          const m = new Date(p.createdAt).toLocaleString("default", { month: "short", year: "2-digit" });
-          monthMap[m] = (monthMap[m] || 0) + 1;
+          const d = new Date(p.createdAt);
+          const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
+          monthMap[key] = (monthMap[key] || 0) + 1;
         });
-        setTimelineData(Object.entries(monthMap).map(([month, count]) => ({ month, count })));
+        const sortedKeys = Object.keys(monthMap).sort();
+        if (sortedKeys.length > 0) {
+          // Fill gaps between first and last month
+          const [startY, startM] = sortedKeys[0].split("-").map(Number);
+          const [endY, endM]     = sortedKeys[sortedKeys.length - 1].split("-").map(Number);
+          const filled = [];
+          let y = startY, m = startM;
+          while (y < endY || (y === endY && m <= endM)) {
+            const key = `${y}-${String(m).padStart(2, "0")}`;
+            filled.push({
+              month: `${MONTH_NAMES[m]} '${String(y).slice(2)}`,
+              count: monthMap[key] || 0,
+            });
+            m++;
+            if (m > 11) { m = 0; y++; }
+          }
+          setTimelineData(filled.slice(-12)); // Last 12 months max
+        } else {
+          setTimelineData([]);
+        }
+
+        // ── Stock Status Distribution ──
+        const stockMap = { in_stock: 0, limited: 0, out_of_stock: 0 };
+        prods.forEach((p) => {
+          stockMap[p.stockStatus] = (stockMap[p.stockStatus] || 0) + 1;
+        });
+        setStockData([
+          { name: "In Stock",     value: stockMap.in_stock,     color: "#10b981" },
+          { name: "Limited",      value: stockMap.limited,      color: "#f59e0b" },
+          { name: "Out of Stock", value: stockMap.out_of_stock,  color: "#ef4444" },
+        ].filter((d) => d.value > 0));
+
+        // ── Price Range Distribution ──
+        const ranges = [
+          { label: "₹0 – ₹500",      min: 0,     max: 500 },
+          { label: "₹500 – ₹2K",     min: 500,   max: 2000 },
+          { label: "₹2K – ₹10K",     min: 2000,  max: 10000 },
+          { label: "₹10K – ₹50K",    min: 10000, max: 50000 },
+          { label: "₹50K+",          min: 50000, max: Infinity },
+        ];
+        const RATE_MAP = { INR: 1, USD: 83, EUR: 90, GBP: 105, AED: 22.6, CNY: 11.5, JPY: 0.55 };
+        const priceRanges = ranges.map((r) => ({
+          range: r.label,
+          count: prods.filter((p) => {
+            const inr = Math.round(p.price * (RATE_MAP[p.currency] || 83));
+            return inr >= r.min && inr < r.max;
+          }).length,
+        }));
+        setPriceRangeData(priceRanges);
 
       } catch (err) {
         console.error("Dashboard Load Error:", err);
@@ -743,26 +797,38 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Line Chart */}
+      {/* Products Over Time — Area Chart */}
       <div className="bg-white rounded-xl border border-gray-100
                       shadow-sm p-6 mb-6">
         <h3 className="font-display font-semibold text-gray-900 mb-6">
           Products Added Over Time
         </h3>
         {timelineData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={timelineData}>
+          <ResponsiveContainer width="100%" height={250}>
+            <AreaChart data={timelineData}>
+              <defs>
+                <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip contentStyle={{
-                borderRadius: "8px", fontSize: "13px",
-              }} />
-              <Line type="monotone" dataKey="count"
-                stroke="#f59e0b" strokeWidth={2.5}
-                dot={{ fill: "#f59e0b", r: 5 }}
-                activeDot={{ r: 7 }} />
-            </LineChart>
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+              <Tooltip
+                contentStyle={{ borderRadius: "10px", fontSize: "13px", border: "1px solid #eee" }}
+                formatter={(value) => [`${value} products`, "Added"]}
+              />
+              <Area
+                type="monotone"
+                dataKey="count"
+                stroke="#f59e0b"
+                strokeWidth={2.5}
+                fill="url(#colorCount)"
+                dot={{ fill: "#f59e0b", r: 4, strokeWidth: 2, stroke: "#fff" }}
+                activeDot={{ r: 7, stroke: "#f59e0b", strokeWidth: 2 }}
+              />
+            </AreaChart>
           </ResponsiveContainer>
         ) : (
           <div className="h-48 flex items-center justify-center
@@ -770,6 +836,81 @@ const Dashboard = () => {
             No data yet
           </div>
         )}
+      </div>
+
+      {/* New Charts Row — Stock Status + Price Range */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+        {/* Stock Status Donut */}
+        <div className="bg-white rounded-xl border border-gray-100
+                        shadow-sm p-6">
+          <h3 className="font-display font-semibold text-gray-900 mb-6">
+            Stock Status Overview
+          </h3>
+          {stockData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={stockData}
+                  cx="50%" cy="50%"
+                  innerRadius={55} outerRadius={95}
+                  paddingAngle={4}
+                  dataKey="value"
+                  label={({ name, percent }) =>
+                    `${name} ${(percent * 100).toFixed(0)}%`
+                  }
+                >
+                  {stockData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ borderRadius: "10px", fontSize: "13px" }}
+                  formatter={(value) => [`${value} products`]}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-64 flex items-center justify-center
+                            text-gray-300">
+              No data yet
+            </div>
+          )}
+        </div>
+
+        {/* Price Range Distribution */}
+        <div className="bg-white rounded-xl border border-gray-100
+                        shadow-sm p-6">
+          <h3 className="font-display font-semibold text-gray-900 mb-6">
+            Price Range Distribution
+          </h3>
+          {priceRangeData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={priceRangeData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis type="number" tick={{ fontSize: 12 }}
+                  allowDecimals={false} />
+                <YAxis type="category" dataKey="range"
+                  tick={{ fontSize: 11 }} width={90} />
+                <Tooltip
+                  contentStyle={{ borderRadius: "10px", fontSize: "13px" }}
+                  formatter={(value) => [`${value} products`, "Count"]}
+                />
+                <Bar dataKey="count" radius={[0, 6, 6, 0]}>
+                  {priceRangeData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-64 flex items-center justify-center
+                            text-gray-300">
+              No data yet
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Recent Products + Inquiries */}
