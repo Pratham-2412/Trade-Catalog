@@ -16,7 +16,7 @@ import API from "../api/axios";
 import {
   fetchInquiries, updateInquiryStatus, deleteInquiry,
 } from "../api/products";
-import Barcode from "../components/Barcode";
+
 import Spinner from "../components/Spinner";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -49,6 +49,397 @@ const StatCard = ({ icon: Icon, label, value, color, sub, to }) => {
   return to ? <Link to={to}>{content}</Link> : content;
 };
 
+// ── All available permissions in the system ──
+const ALL_PERMISSIONS = [
+  "view_products",
+  "add_products",
+  "edit_products",
+  "delete_products",
+  "manage_categories",
+  "manage_orders",
+  "view_orders",
+  "manage_users",
+  "manage_inquiries",
+  "view_inquiries",
+  "manage_settings",
+  "export_data",
+  "bulk_upload",
+  "view_dashboard",
+  "manage_roles",
+];
+
+// ── Default permissions that ship with core roles ──
+const DEFAULT_PERMISSIONS = {
+  admin:   ALL_PERMISSIONS,
+  manager: [
+    "view_products", "add_products", "edit_products",
+    "manage_categories", "view_orders", "manage_orders",
+    "view_inquiries", "manage_inquiries", "export_data",
+    "bulk_upload", "view_dashboard",
+  ],
+  user: ["view_products", "view_orders", "view_inquiries"],
+};
+
+const RolePermissionTable = ({ roles, setRoles }) => {
+  const [editingRoleId, setEditingRoleId] = useState(null);
+  const [editPerms, setEditPerms]         = useState([]);
+  const [saving, setSaving]               = useState(false);
+  const [addPerm, setAddPerm]             = useState("");
+  const [showCreate, setShowCreate]       = useState(false);
+
+  const startEditing = (role) => {
+    setEditingRoleId(role._id);
+    setEditPerms([...(role.permissions || [])]);
+    setAddPerm("");
+  };
+
+  const cancelEditing = () => {
+    setEditingRoleId(null);
+    setEditPerms([]);
+    setAddPerm("");
+  };
+
+  const togglePerm = (perm) => {
+    setEditPerms((prev) =>
+      prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]
+    );
+  };
+
+  const handleAddPerm = (perm) => {
+    if (perm && !editPerms.includes(perm)) {
+      setEditPerms((prev) => [...prev, perm]);
+    }
+    setAddPerm("");
+  };
+
+  const savePermissions = async (roleId) => {
+    try {
+      setSaving(true);
+      await API.put(`/settings/roles/${roleId}`, { permissions: editPerms });
+      setRoles((prev) =>
+        prev.map((r) =>
+          r._id === roleId ? { ...r, permissions: [...editPerms] } : r
+        )
+      );
+      toast.success("Permissions updated ✅");
+      cancelEditing();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteRole = async (role) => {
+    if (!window.confirm(`Delete role "${role.displayName}"?`)) return;
+    try {
+      await API.delete(`/settings/roles/${role._id}`);
+      setRoles((prev) => prev.filter((r) => r._id !== role._id));
+      toast.success("Role deleted");
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const createRole = async (e) => {
+    e.preventDefault();
+    const name = e.target.roleName.value.trim();
+    const displayName = e.target.displayName.value.trim();
+    if (!name || !displayName) return;
+    try {
+      const { data } = await API.post("/settings/roles", {
+        name,
+        displayName,
+        permissions: ["view_products"],
+      });
+      setRoles((prev) => [...prev, data]);
+      toast.success("Role created ✅");
+      e.target.reset();
+      setShowCreate(false);
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const isCore = (name) => ["admin", "manager", "user"].includes(name);
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-8 mt-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-2">
+          <FiShield className="text-indigo-500 text-xl" />
+          <h3 className="font-display font-semibold text-xl text-gray-900">
+            Role & Permission Management
+          </h3>
+        </div>
+        <button
+          onClick={() => setShowCreate(!showCreate)}
+          className="flex items-center gap-1.5 bg-trade-navy text-white
+                     px-4 py-2 rounded-xl text-sm font-medium
+                     hover:bg-blue-800 transition-colors"
+        >
+          <FiPlus size={14} />
+          {showCreate ? "Cancel" : "Add New Role"}
+        </button>
+      </div>
+
+      {/* Create Role Form */}
+      {showCreate && (
+        <form
+          onSubmit={createRole}
+          className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-indigo-50
+                     rounded-xl border border-indigo-100"
+        >
+          <input
+            name="roleName"
+            placeholder="Role ID (e.g. staff)"
+            className="input-field flex-1"
+            required
+          />
+          <input
+            name="displayName"
+            placeholder="Display Name (e.g. Sales Staff)"
+            className="input-field flex-1"
+            required
+          />
+          <button
+            type="submit"
+            className="btn-primary px-6 py-2.5 whitespace-nowrap"
+          >
+            Create Role
+          </button>
+        </form>
+      )}
+
+      {/* Role Permission Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-100">
+              <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                Role
+              </th>
+              <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Type
+              </th>
+              <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Permissions
+              </th>
+              <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider text-right whitespace-nowrap">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {roles.map((role) => {
+              const isEditing = editingRoleId === role._id;
+              const defaults = DEFAULT_PERMISSIONS[role.name] || [];
+              const permsToShow = isEditing ? editPerms : (role.permissions || []);
+              const availableToAdd = ALL_PERMISSIONS.filter(
+                (p) => !permsToShow.includes(p)
+              );
+
+              return (
+                <tr
+                  key={role._id}
+                  className={`transition-colors ${
+                    isEditing
+                      ? "bg-indigo-50/40"
+                      : "hover:bg-gray-50/50"
+                  }`}
+                >
+                  {/* Role Name */}
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-white font-bold text-xs ${
+                          role.name === "admin"
+                            ? "bg-rose-500"
+                            : role.name === "manager"
+                              ? "bg-amber-500"
+                              : role.name === "user"
+                                ? "bg-blue-500"
+                                : "bg-indigo-500"
+                        }`}
+                      >
+                        {role.displayName?.charAt(0)?.toUpperCase() || "R"}
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900 text-sm">
+                          {role.displayName}
+                        </p>
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wider">
+                          {role.name}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Type */}
+                  <td className="px-4 py-4">
+                    <span
+                      className={`badge text-[10px] font-bold uppercase tracking-wider ${
+                        isCore(role.name)
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-purple-100 text-purple-700"
+                      }`}
+                    >
+                      {isCore(role.name) ? "System" : "Custom"}
+                    </span>
+                  </td>
+
+                  {/* Permissions */}
+                  <td className="px-4 py-4">
+                    <div className="flex flex-wrap gap-1.5 max-w-xl">
+                      {permsToShow.map((perm) => {
+                        const isDefault = defaults.includes(perm);
+                        return (
+                          <span
+                            key={perm}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5
+                                        rounded-md text-[10px] font-semibold
+                                        transition-all ${
+                              isDefault
+                                ? "bg-green-100 text-green-700 border border-green-200"
+                                : "bg-amber-100 text-amber-700 border border-amber-200"
+                            } ${isEditing ? "cursor-pointer hover:opacity-70" : ""}`}
+                            onClick={
+                              isEditing ? () => togglePerm(perm) : undefined
+                            }
+                            title={
+                              isEditing
+                                ? "Click to remove"
+                                : isDefault
+                                  ? "Default permission"
+                                  : "Manually added"
+                            }
+                          >
+                            {perm.replace(/_/g, " ")}
+                            {isEditing && (
+                              <FiX size={10} className="ml-0.5 text-red-400" />
+                            )}
+                          </span>
+                        );
+                      })}
+
+                      {/* Add Permission Dropdown (only in edit mode) */}
+                      {isEditing && availableToAdd.length > 0 && (
+                        <select
+                          value={addPerm}
+                          onChange={(e) => handleAddPerm(e.target.value)}
+                          className="text-[10px] font-semibold px-2 py-0.5
+                                     rounded-md border border-dashed border-indigo-300
+                                     bg-indigo-50 text-indigo-600 cursor-pointer
+                                     focus:ring-1 focus:ring-indigo-400
+                                     focus:outline-none appearance-none"
+                        >
+                          <option value="">+ Add permission</option>
+                          {availableToAdd.map((p) => (
+                            <option key={p} value={p}>
+                              {p.replace(/_/g, " ")}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+
+                      {permsToShow.length === 0 && (
+                        <span className="text-xs text-gray-300 italic">
+                          No permissions
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-4 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {isEditing ? (
+                        <>
+                          <button
+                            onClick={() => savePermissions(role._id)}
+                            disabled={saving}
+                            className="p-2 bg-green-100 text-green-700
+                                       rounded-lg hover:bg-green-200
+                                       transition-colors disabled:opacity-50"
+                            title="Save Permissions"
+                          >
+                            <FiSave size={14} />
+                          </button>
+                          <button
+                            onClick={cancelEditing}
+                            className="p-2 bg-gray-100 text-gray-500
+                                       rounded-lg hover:bg-gray-200
+                                       transition-colors"
+                            title="Cancel"
+                          >
+                            <FiX size={14} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => startEditing(role)}
+                            className="p-2 text-gray-400 hover:text-trade-navy
+                                       hover:bg-gray-100 rounded-lg
+                                       transition-colors"
+                            title="Edit Permissions"
+                          >
+                            <FiEdit2 size={14} />
+                          </button>
+                          {!isCore(role.name) && (
+                            <button
+                              onClick={() => deleteRole(role)}
+                              className="p-2 text-gray-400 hover:text-red-500
+                                         hover:bg-red-50 rounded-lg
+                                         transition-colors"
+                              title="Delete Role"
+                            >
+                              <FiTrash2 size={14} />
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+            {roles.length === 0 && (
+              <tr>
+                <td colSpan="4" className="py-8 text-center text-gray-300">
+                  No roles found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-gray-100">
+        <span className="text-xs text-gray-400 font-medium">Legend:</span>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-green-100 border border-green-200" />
+          <span className="text-xs text-gray-500">Default Permission</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-amber-100 border border-amber-200" />
+          <span className="text-xs text-gray-500">Manually Added</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="badge text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0">System</span>
+          <span className="text-xs text-gray-500">Core roles (cannot delete)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="badge text-[9px] bg-purple-100 text-purple-700 px-1.5 py-0">Custom</span>
+          <span className="text-xs text-gray-500">User-created roles</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = () => {
   const { user }                      = useAuth();
   const [products,   setProducts]     = useState([]);
@@ -57,7 +448,7 @@ const Dashboard = () => {
   const [categories, setCategories]   = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [stats,        setStats]        = useState({});
-  const [hsnCodes,     setHsnCodes]     = useState([]);
+
   const [roles,        setRoles]        = useState([]);
   const [orderStats,    setOrderStats]    = useState(null);
   const [recentOrders,  setRecentOrders]  = useState([]);
@@ -69,13 +460,12 @@ const Dashboard = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const [prodRes, userRes, inqRes, catRes, orderRes, hsnRes, rolesRes] = await Promise.all([
+        const [prodRes, userRes, inqRes, catRes, orderRes, rolesRes] = await Promise.all([
           API.get("/products?limit=1000"),
           API.get("/auth/users"),
           fetchInquiries({ limit: 5 }),
           API.get("/categories"),
           API.get("/orders/admin/stats"),
-          API.get("/settings/hsn"),
           API.get("/settings/roles"),
         ]);
 
@@ -90,7 +480,7 @@ const Dashboard = () => {
         setCategories(cats);
         setOrderStats(orderRes.data);
         setRecentOrders(orderRes.data.recentOrders || []);
-        setHsnCodes(hsnRes.data);
+
         setRoles(rolesRes.data);
 
         // ── Stats Calculation ──
@@ -577,88 +967,8 @@ const Dashboard = () => {
           ))}
         </div>
       </div>
-      {/* Quick Settings Section (Roles & HSN) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
-        {/* Manage HSN Codes */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <FiTag className="text-trade-gold" />
-            <h3 className="font-display font-semibold text-gray-900">Manage HSN Codes</h3>
-          </div>
-          <form className="flex gap-2 mb-4" onSubmit={async (e) => {
-            e.preventDefault();
-            const code = e.target.hsn.value;
-            if(!code) return;
-            try {
-              await API.post("/settings/hsn", { code, description: "Added from dashboard" });
-              toast.success("HSN Code added");
-              e.target.reset();
-              window.location.reload();
-            } catch (err) { toast.error(err.message); }
-          }}>
-            <input name="hsn" placeholder="Enter HSN Code..." className="input-field flex-1" />
-            <button type="submit" className="btn-primary px-4">Add</button>
-          </form>
-          <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-             {hsnCodes.map((hsn) => (
-               <div key={hsn._id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
-                 <div>
-                   <p className="font-bold text-xs">{hsn.code}</p>
-                   <p className="text-[10px] text-gray-400">{hsn.description}</p>
-                 </div>
-                 <Barcode value={hsn.code} height={20} width={1} displayValue={false} />
-               </div>
-             ))}
-             {hsnCodes.length === 0 && <p className="text-xs text-gray-400 italic">No HSN codes found</p>}
-          </div>
-        </div>
-
-        {/* Manage Dynamic Roles */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <FiShield className="text-indigo-500" />
-            <h3 className="font-display font-semibold text-gray-900">Add Custom Roles</h3>
-          </div>
-          <form className="space-y-3" onSubmit={async (e) => {
-             e.preventDefault();
-             const name = e.target.roleName.value;
-             const displayName = e.target.displayName.value;
-             if(!name || !displayName) return;
-             try {
-                await API.post("/settings/roles", { name, displayName });
-                toast.success("Role created");
-                e.target.reset();
-                window.location.reload();
-             } catch (err) { toast.error(err.message); }
-          }}>
-            <input name="roleName" placeholder="Role ID (e.g. staff)" className="input-field" />
-            <input name="displayName" placeholder="Display Name (e.g. Sales Staff)" className="input-field" />
-            <button type="submit" className="btn-primary w-full py-2.5">Create New Role</button>
-          </form>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {roles.map((r) => (
-              <div key={r._id} className="flex items-center gap-1.5 px-2 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded uppercase border border-indigo-100">
-                <span>{r.displayName}</span>
-                {!["admin", "manager", "user"].includes(r.name) && (
-                   <button 
-                     onClick={async () => {
-                       if(!window.confirm(`Delete role "${r.displayName}"?`)) return;
-                       try {
-                         await API.delete(`/settings/roles/${r._id}`);
-                         toast.success("Role deleted");
-                         window.location.reload();
-                       } catch (err) { toast.error(err.message); }
-                     }}
-                     className="hover:text-red-500 transition-colors"
-                   >
-                     ×
-                   </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* ── Role & Permission Management ── */}
+      <RolePermissionTable roles={roles} setRoles={setRoles} />
       
     </div>
   );
